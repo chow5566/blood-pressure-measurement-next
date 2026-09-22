@@ -1,6 +1,6 @@
 {
   "name": "blood-pressure-measurement",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "血压及B超检测（重构版，支持 Win7 / 32 位 + 64 位）",
   "author": "skzx",
   "main": "./out/main/index.js",
