@@ -1,0 +1,69 @@
+name: Release
+
+# 推送 v* 标签时触发：在 Windows runner 上构建 x64 + ia32，
+# 并把安装包 / blockmap / 更新文件（win-x64.yml、win-ia32.yml）发布到同一个 GitHub Release。
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      # GitHub 托管 runner 直连官方源更快，覆盖 .npmrc / electron-builder.yml 里的国内镜像
+      ELECTRON_MIRROR: https://github.com/electron/electron/releases/download/
+      NPM_CONFIG_ELECTRON_MIRROR: https://github.com/electron/electron/releases/download/
+      NPM_CONFIG_ELECTRON_BUILDER_BINARIES_MIRROR: https://github.com/electron-userland/electron-builder-binaries/releases/download/
+      # 允许向已发布超过 2 小时的 Release 追加资产（重跑场景）
+      EP_GH_IGNORE_TIME: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify tag matches package.json version
+        shell: bash
+        run: |
+          pkg="v$(node -p "require('./package.json').version")"
+          if [ "${GITHUB_REF_NAME}" != "$pkg" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} 与 package.json 版本 ${pkg} 不一致"
+            exit 1
+          fi
+
+      - name: Build (typecheck + renderer/main/preload)
+        run: pnpm build
+
+      - name: Build & publish x64
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pnpm rebuild:x64
+          pnpm exec electron-builder --win --x64 --config.publish.channel=win-x64 --config.electronDownload.mirror=https://github.com/electron/electron/releases/download/ --publish always
+
+      - name: Build & publish ia32
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pnpm rebuild:ia32
+          pnpm exec electron-builder --win --ia32 --config.publish.channel=win-ia32 --config.electronDownload.mirror=https://github.com/electron/electron/releases/download/ --publish always
