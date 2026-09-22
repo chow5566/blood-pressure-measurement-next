@@ -18,10 +18,6 @@ jobs:
   build:
     runs-on: windows-latest
     env:
-      # GitHub 托管 runner 直连官方源更快，覆盖 .npmrc / electron-builder.yml 里的国内镜像
-      ELECTRON_MIRROR: https://github.com/electron/electron/releases/download/
-      NPM_CONFIG_ELECTRON_MIRROR: https://github.com/electron/electron/releases/download/
-      NPM_CONFIG_ELECTRON_BUILDER_BINARIES_MIRROR: https://github.com/electron-userland/electron-builder-binaries/releases/download/
       # 允许向已发布超过 2 小时的 Release 追加资产（重跑场景）
       EP_GH_IGNORE_TIME: '1'
     steps:
@@ -59,11 +55,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pnpm rebuild:x64
-          pnpm exec electron-builder --win --x64 --config.publish.channel=win-x64 --config.electronDownload.mirror=https://github.com/electron/electron/releases/download/ --publish always
+          pnpm exec electron-builder --win --x64 --config.publish.channel=win-x64 --publish always
 
       - name: Build & publish ia32
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pnpm rebuild:ia32
-          pnpm exec electron-builder --win --ia32 --config.publish.channel=win-ia32 --config.electronDownload.mirror=https://github.com/electron/electron/releases/download/ --publish always
+          pnpm exec electron-builder --win --ia32 --config.publish.channel=win-ia32 --publish always
