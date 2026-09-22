@@ -150,56 +150,23 @@
           <div class="panel__body">
             <div class="row row--inline">
               <div class="row__field">
-                <span class="row__meta">{{ updateText }}</span>
+                <span class="row__meta">{{ updateSummary }}</span>
               </div>
               <div class="row__ops">
-                <UiButton variant="secondary" size="sm" :loading="checking" @click="checkUpdate">
-                  检查更新
-                </UiButton>
-                <UiButton
-                  v-if="update?.state === 'available'"
-                  variant="primary"
-                  size="sm"
-                  :loading="downloading"
-                  @click="downloadUpdate"
-                >
-                  下载更新
-                </UiButton>
-                <UiButton
-                  v-if="update?.state === 'downloaded'"
-                  variant="primary"
-                  size="sm"
-                  @click="installUpdate"
-                >
-                  重启安装
-                </UiButton>
-                <UiButton
-                  v-if="update?.state === 'available'"
-                  variant="ghost"
-                  size="sm"
-                  @click="handleSkipVersion"
-                >
-                  不再提示此版本
+                <UiButton variant="secondary" size="sm" @click="openUpdateCenter">
+                  更新中心
+                  <span v-if="updateStore.hasUpdate" class="update-dot"></span>
                 </UiButton>
               </div>
             </div>
-            <div
-              v-if="update && update.state !== 'idle' && update.state !== 'checking'"
-              class="update-meta"
-            >
-              <div class="update-meta__head">
-                <span class="label-cap">版本</span>
-                <span class="update-meta__ver">v{{ update.version || config.version }}</span>
-                <span v-if="update.sizeBytes" class="app-hint">
-                  安装包 {{ formatBytes(update.sizeBytes) }}
-                </span>
-              </div>
-              <div v-if="update.releaseNotes" class="update-meta__notes">
-                {{ update.releaseNotes }}
-              </div>
+            <div v-if="updateStore.skipped.length" class="row__meta update-skipped-hint">
+              已忽略 {{ updateStore.skipped.length }} 个版本，可在更新中心恢复
             </div>
-            <div v-if="update?.state === 'downloading'" class="bar">
-              <div class="bar__fill" :style="{ width: (update.percent ?? 0) + '%' }"></div>
+            <div v-if="isDownloading" class="bar">
+              <div
+                class="bar__fill"
+                :style="{ width: Math.round(updateStore.status.percent ?? 0) + '%' }"
+              ></div>
             </div>
           </div>
         </section>
@@ -339,7 +306,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import UiButton from '@r/components/ui/UiButton.vue'
 import UiInput from '@r/components/ui/UiInput.vue'
 import UiIcon from '@r/components/ui/UiIcon.vue'
@@ -347,16 +314,14 @@ import StorageView from '@r/views/StorageView.vue'
 import type { IconName } from '@r/components/ui/icons'
 import { useConfigStore } from '@r/stores/config'
 import { useThemeStore, type ThemeMode } from '@r/stores/theme'
+import { useUpdateStore } from '@r/stores/update'
 import { driverApi } from '@r/api/driver'
-import { updateApi } from '@r/api/update'
 import { appApi } from '@r/api/app'
 import { toast } from '@r/utils/toast'
 import { confirmBox } from '@r/utils/confirm'
-import { skipVersion } from '@r/utils/update'
 import { comboText } from '@r/utils/hotkey'
 import { groupedHotkeyDefs, HOTKEY_DEFS, type HotkeyDef } from '@shared/domain/hotkeys'
-import { formatBytes } from '@shared/utils/format'
-import type { DriverStatus, HotkeyConfig, PhotoHotkey, UpdateStatus } from '@shared/domain/app'
+import type { DriverStatus, HotkeyConfig, PhotoHotkey } from '@shared/domain/app'
 
 /** 设置页：基础配置 / 外观 / 设备与更新 / 快捷键（分类 Tab） */
 const config = useConfigStore()
@@ -474,31 +439,35 @@ async function restoreAllHotkeys(): Promise<void> {
 const driver = ref<DriverStatus | null>(null)
 const driverLoading = ref(false)
 
-const update = ref<UpdateStatus | null>(null)
-const checking = ref(false)
-const downloading = ref(false)
+const updateStore = useUpdateStore()
+const isDownloading = computed(() => updateStore.status.state === 'downloading')
 
-let unsubscribeStatus: (() => void) | null = null
-
-const updateText = computed(() => {
-  const state = update.value?.state
-  switch (state) {
+const updateSummary = computed(() => {
+  const status = updateStore.status
+  switch (status.state) {
     case 'checking':
       return '正在检查更新…'
     case 'available':
-      return `发现新版本 v${update.value?.version}`
+      return `发现新版本 v${status.version}`
+    case 'downloading':
+      return `正在下载更新… ${Math.round(status.percent ?? 0)}%`
+    case 'paused':
+      return `更新下载已暂停 ${Math.round(status.percent ?? 0)}%（可续传）`
+    case 'downloaded':
+      return `v${status.version} 已下载，重启后安装`
     case 'not-available':
       return '当前已是最新版本'
-    case 'downloading':
-      return `正在下载… ${update.value?.percent ?? 0}%`
-    case 'downloaded':
-      return '下载完成，可重启安装'
     case 'error':
-      return `更新失败：${update.value?.message ?? ''}`
+      return `更新失败：${status.message ?? ''}`
     default:
-      return '点击「检查更新」获取最新版本'
+      return '打开更新中心检查并安装新版本'
   }
 })
+
+function openUpdateCenter(): void {
+  void updateStore.init()
+  updateStore.open()
+}
 
 async function saveConfig(): Promise<void> {
   saving.value = true
@@ -552,47 +521,14 @@ async function uninstallDriver(): Promise<void> {
   }
 }
 
-async function checkUpdate(): Promise<void> {
-  checking.value = true
-  try {
-    update.value = await updateApi.check()
-  } finally {
-    checking.value = false
-  }
-}
-
-async function downloadUpdate(): Promise<void> {
-  downloading.value = true
-  try {
-    update.value = await updateApi.download()
-  } finally {
-    downloading.value = false
-  }
-}
-
-async function installUpdate(): Promise<void> {
-  const ok = await confirmBox('将退出并安装更新，是否继续？')
-  if (ok) updateApi.install()
-}
-
-function handleSkipVersion(): void {
-  const version = update.value?.version
-  if (!version) return
-  skipVersion(version)
-  toast(`已忽略版本 v${version}`, 'success')
-}
-
 function openExternal(url: string): void {
   void appApi.openExternal(url)
 }
 
 onMounted(() => {
   void refreshDriver()
-  void updateApi.status().then((s) => (update.value = s))
-  unsubscribeStatus = updateApi.onStatus((s) => (update.value = s))
+  void updateStore.init()
 })
-
-onUnmounted(() => unsubscribeStatus?.())
 </script>
 
 <style scoped>
@@ -862,30 +798,17 @@ onUnmounted(() => unsubscribeStatus?.())
   user-select: none;
 }
 
-/* 更新说明 */
-.update-meta {
-  margin-top: var(--s3);
-  padding-top: var(--s3);
-  border-top: 1px solid var(--line);
+/* 更新状态提示 */
+.update-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 6px;
+  background: var(--accent);
+  vertical-align: middle;
 }
-.update-meta__head {
-  display: flex;
-  align-items: center;
-  gap: var(--s2);
-}
-.update-meta__ver {
-  font-size: var(--fs-md);
-  font-weight: 600;
-  color: var(--t1);
-}
-.update-meta__notes {
+.update-skipped-hint {
   margin-top: var(--s2);
-  max-height: 160px;
-  overflow: auto;
-  font-size: var(--fs-sm);
-  color: var(--t2);
-  line-height: 1.7;
-  white-space: pre-wrap;
 }
 .about__name {
   font-size: var(--fs-lg);

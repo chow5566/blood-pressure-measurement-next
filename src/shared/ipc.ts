@@ -155,8 +155,12 @@ export interface IpcContract {
 
   /** 检查更新 */
   'update:check': () => UpdateStatus
-  /** 下载更新 */
+  /** 下载更新（若存在未完成下载则续传） */
   'update:download': () => UpdateStatus
+  /** 暂停下载（保留已下载进度，可续传） */
+  'update:pause': () => UpdateStatus
+  /** 取消更新并清除已下载进度 */
+  'update:cancel': () => UpdateStatus
   /** 退出并安装 */
   'update:install': () => void
   /** 当前更新状态 */
@@ -232,6 +236,8 @@ export const INVOKE_CHANNELS = [
   'driver:uninstall',
   'update:check',
   'update:download',
+  'update:pause',
+  'update:cancel',
   'update:install',
   'update:status',
   'window:minimize',

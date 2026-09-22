@@ -84,6 +84,17 @@ publish:
 - 安装包文件名改为纯 ASCII `blood-pressure-measurement-<version>-<arch>-setup.exe`：
   GitHub 资产名不允许中文，否则会被替换成**不含 arch** 的安全名而导致双架构撞名。
 
+### 3.5 更新说明与更新中心
+
+- 更新说明来自仓库 `build/release-notes.md`（**每次发版前编辑**）：electron-builder 会把它写入
+  `win-x64.yml` / `win-ia32.yml` 的 `releaseNotes`，客户端更新弹框直接展示（支持 Markdown）。
+- 客户端「更新中心」：启动发现新版本时**自动弹框**，展示当前版本 → 目标版本、安装包大小、
+  发布日期与实时下载进度；支持**暂停/继续（断点续传）**、取消更新、忽略指定版本并随时恢复。
+  实现见 `src/main/infra/update/*`（自建可续传下载器 + electron-updater 缓存交接）与
+  `src/renderer/src/components/UpdateDialog.vue`。
+- 下载落到 electron-updater 缓存（`%LOCALAPPDATA%\blood-pressure-measurement-updater\pending`），
+  校验 sha512 后由 electron-updater 复用并触发「下载完成」。
+
 ### 3.3 安装时选择数据目录
 
 - 通过 `nsis.include` 注入自定义页面，让用户选择数据目录（详见

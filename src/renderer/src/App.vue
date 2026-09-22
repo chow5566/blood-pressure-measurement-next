@@ -2,6 +2,7 @@
   <el-config-provider :locale="locale">
     <ToastHost />
     <ConfirmHost />
+    <UpdateDialog />
 
     <LoginView v-if="!entered" @enter="handleEnter" @offline="handleOffline" />
 
@@ -115,16 +116,16 @@ import LoginView from '@r/views/LoginView.vue'
 import WindowControls from '@r/components/WindowControls.vue'
 import ToastHost from '@r/components/ui/ToastHost.vue'
 import ConfirmHost from '@r/components/ui/ConfirmHost.vue'
+import UpdateDialog from '@r/components/UpdateDialog.vue'
 import UiLogo from '@r/components/ui/UiLogo.vue'
 import UiIcon from '@r/components/ui/UiIcon.vue'
 import type { IconName } from '@r/components/ui/icons'
 import { useConfigStore } from '@r/stores/config'
 import { useUserStore } from '@r/stores/user'
 import { useThemeStore, type ThemeMode } from '@r/stores/theme'
+import { useUpdateStore } from '@r/stores/update'
 import { authApi } from '@r/api/auth'
-import { updateApi } from '@r/api/update'
 import { confirmBox } from '@r/utils/confirm'
-import { isSkippedVersion } from '@r/utils/update'
 import { configureHotkeys, installHotkeys, setPageScope } from '@r/hotkeys/manager'
 import type { HotkeyScope } from '@shared/domain/hotkeys'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
@@ -134,6 +135,7 @@ const locale = zhCn
 const config = useConfigStore()
 const userStore = useUserStore()
 const theme = useThemeStore()
+const updateStore = useUpdateStore()
 const route = useRoute()
 const router = useRouter()
 const entered = ref(false)
@@ -234,27 +236,17 @@ onMounted(async () => {
   await config.load()
   entered.value = config.loggedIn
   userStore.isOnline = config.loggedIn ? 'Y' : 'N'
+  void updateStore.init()
   if (entered.value) void autoCheckUpdate()
   configureHotkeys(() => config.hotkeys)
   installHotkeys()
 })
 
-/** 启动后自动检查更新（跳过“不再提示”的版本，失败静默；开发环境不检查） */
+/** 启动后自动检查更新（发现新版本会自动弹框；忽略的版本不弹；开发环境不检查） */
 async function autoCheckUpdate(): Promise<void> {
   if (import.meta.env.DEV) return
-  try {
-    const status = await updateApi.check()
-    if (status.state === 'available' && status.version && !isSkippedVersion(status.version)) {
-      ElNotification({
-        title: '发现新版本',
-        message: `v${status.version} 可用，可在「设置 → 设备与更新」中下载`,
-        type: 'info',
-        duration: 10000
-      })
-    }
-  } catch {
-    // 离线或检查失败忽略
-  }
+  await updateStore.init()
+  await updateStore.check()
 }
 </script>
 

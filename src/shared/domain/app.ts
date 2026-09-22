@@ -124,17 +124,41 @@ export interface DriverStatus {
 
 /** 更新状态 */
 export type UpdateState =
-  'idle' | 'checking' | 'available' | 'not-available' | 'downloading' | 'downloaded' | 'error'
+  | 'idle'
+  | 'checking'
+  | 'available'
+  | 'not-available'
+  | 'downloading'
+  | 'paused'
+  | 'downloaded'
+  | 'cancelled'
+  | 'error'
 
+/** 更新状态快照（主进程 → 渲染） */
 export interface UpdateStatus {
   state: UpdateState
-  /** 下载进度 0~100 */
-  percent?: number
-  /** 新版本号 */
+  /** 当前应用版本 */
+  currentVersion?: string
+  /** 目标版本号 */
   version?: string
-  /** 更新说明 */
+  /** 版本发布名称（若有） */
+  releaseName?: string
+  /** 发布日期（ISO 字符串） */
+  releaseDate?: string
+  /** 更新说明（Markdown 原文） */
   releaseNotes?: string
   /** 安装包大小（字节） */
   sizeBytes?: number
+  /** 已下载字节 */
+  transferred?: number
+  /** 需要下载的总字节（通常等于 sizeBytes） */
+  total?: number
+  /** 下载速度（字节/秒） */
+  bytesPerSecond?: number
+  /** 下载进度 0~100 */
+  percent?: number
+  /** 是否存在可续传的未完成下载（已下载一部分，可继续） */
+  resumable?: boolean
+  /** 检查/下载失败的错误信息 */
   message?: string
 }

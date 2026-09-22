@@ -24,3 +24,15 @@ export function skipVersion(version: string): void {
     localStorage.setItem(SKIP_KEY, JSON.stringify([...list, version]))
   }
 }
+
+/** 恢复（取消忽略）某个已跳过的版本 */
+export function unskipVersion(version: string): void {
+  if (!version) return
+  const list = getSkippedVersions().filter((item) => item !== version)
+  localStorage.setItem(SKIP_KEY, JSON.stringify(list))
+}
+
+/** 清空全部忽略记录 */
+export function clearSkippedVersions(): void {
+  localStorage.removeItem(SKIP_KEY)
+}
