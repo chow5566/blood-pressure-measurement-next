@@ -19,9 +19,11 @@
     "format": "prettier --write .",
     "rebuild:ia32": "node scripts/rebuild-native.cjs ia32",
     "rebuild:x64": "node scripts/rebuild-native.cjs x64",
-    "build:win": "npm run build && npm run rebuild:x64 && electron-builder --win --x64 && npm run rebuild:ia32 && electron-builder --win --ia32",
-    "build:win32": "npm run build && npm run rebuild:ia32 && electron-builder --win --ia32",
-    "build:win64": "npm run build && npm run rebuild:x64 && electron-builder --win --x64",
+    "build:win": "npm run build && npm run rebuild:x64 && electron-builder --win --x64 --config.publish.channel=win-x64 && npm run rebuild:ia32 && electron-builder --win --ia32 --config.publish.channel=win-ia32",
+    "build:win32": "npm run build && npm run rebuild:ia32 && electron-builder --win --ia32 --config.publish.channel=win-ia32",
+    "build:win64": "npm run build && npm run rebuild:x64 && electron-builder --win --x64 --config.publish.channel=win-x64",
+    "release:win64": "npm run build:win64 -- --publish always",
+    "release:win32": "npm run build:win32 -- --publish always",
     "build:unpack": "npm run build && electron-builder --dir"
   },
   "dependencies": {

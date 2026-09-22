@@ -35,7 +35,8 @@ win:
     - zh-CN
 nsis:
   include: build/installer.nsh
-  artifactName: ${productName}-${version}-${arch}-setup.${ext}
+  # 文件名使用纯 ASCII（GitHub Release 资产名不允许中文，否则会被替换成不含 arch 的安全名而双架构撞名）
+  artifactName: blood-pressure-measurement-${version}-${arch}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   oneClick: false
@@ -49,9 +50,14 @@ nsis:
   installerHeaderIcon: './build/favicon.ico'
 # 关闭 npm rebuild，改用 @electron/rebuild 显式重建原生模块（见 docs/08-build-release.md）
 npmRebuild: false
+# 更新源：GitHub Releases。
+# 双架构不共用 latest.yml，改用独立 channel（build:win64 → win-x64.yml，build:win32 → win-ia32.yml），
+# 运行时会按 process.arch 读取对应 channel 文件。详见 docs/08-build-release.md。
 publish:
-  provider: generic
-  url: http://www.chealth.cn/local-data-display/localImage/upfile/blood-pressure-measurement
+  provider: github
+  owner: chow5566
+  repo: blood-pressure-measurement-next
+  releaseType: release
   updaterCacheDirName: blood-pressure-measurement-updater
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/

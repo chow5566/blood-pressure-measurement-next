@@ -63,4 +63,4 @@
 - [ ] 版本号与 CHANGELOG
 - [ ] 排障手册（docs/12）
 - [ ] 数据目录说明（docs/10）
-- [ ] 代码签名（如具备证书）与更新源 `latest.yml`
+- [ ] 代码签名（如具备证书）与更新源 `win-x64.yml` / `win-ia32.yml`（GitHub Releases）

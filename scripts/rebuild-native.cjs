@@ -29,25 +29,52 @@ function resolveBin(pkgName, binName) {
   }
 }
 
-function run(label, scriptPath, args, cwd) {
+function run(label, scriptPath, args, cwd, env) {
   console.log(`[rebuild] ${label}: node ${path.basename(scriptPath)} ${args.join(' ')}`)
-  const result = spawnSync(process.execPath, [scriptPath, ...args], { cwd, stdio: 'inherit' })
+  const result = spawnSync(process.execPath, [scriptPath, ...args], {
+    cwd,
+    stdio: 'inherit',
+    env: env || process.env
+  })
   return result.status === 0
 }
 
 const bsDir = path.dirname(require.resolve('better-sqlite3/package.json'))
 
-// 1) 预编译优先
+// 1) 预编译优先：默认走国内镜像，避免 GitHub 超时回退源码编译（现场可能无 VS Build Tools）
 const prebuildBin = resolveBin('prebuild-install', 'prebuild-install')
 if (prebuildBin) {
-  const ok = run(
-    'prebuild-install',
-    prebuildBin,
-    ['--runtime', 'electron', '--target', electronVersion, '--arch', arch, '--verbose'],
-    bsDir
-  )
-  if (ok) {
-    console.log(`[rebuild] better-sqlite3 预编译安装完成（electron ${electronVersion} ${arch}）`)
+  const prebuildArgs = [
+    '--runtime',
+    'electron',
+    '--target',
+    electronVersion,
+    '--arch',
+    arch,
+    '--verbose'
+  ]
+  const mirror =
+    process.env.npm_config_better_sqlite3_binary_host ||
+    process.env.better_sqlite3_binary_host ||
+    'https://registry.npmmirror.com/-/binary/better-sqlite3'
+
+  const okMirror = run('prebuild-install (mirror)', prebuildBin, prebuildArgs, bsDir, {
+    ...process.env,
+    npm_config_better_sqlite3_binary_host: mirror
+  })
+  if (okMirror) {
+    console.log(
+      `[rebuild] better-sqlite3 预编译安装完成（electron ${electronVersion} ${arch}，${mirror}）`
+    )
+    process.exit(0)
+  }
+
+  // 镜像失败再回退官方 GitHub 源
+  const okOfficial = run('prebuild-install (github)', prebuildBin, prebuildArgs, bsDir)
+  if (okOfficial) {
+    console.log(
+      `[rebuild] better-sqlite3 预编译安装完成（electron ${electronVersion} ${arch}，github）`
+    )
     process.exit(0)
   }
 }

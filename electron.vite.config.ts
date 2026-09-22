@@ -31,6 +31,14 @@ export default defineConfig({
         '@shared': resolve(__dirname, 'src/shared')
       }
     },
+    css: {
+      // 使用 Sass 现代 JS API，消除 Dart Sass legacy-js-api 弃用警告
+      preprocessorOptions: {
+        scss: {
+          api: 'modern'
+        }
+      }
+    },
     plugins: [
       vue(),
       // Element Plus 按需引入（组件 + ElMessage 等 API），显著减小首屏体积、加快挂载

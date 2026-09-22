@@ -4,8 +4,10 @@ import { broadcast } from '../../ipc/registry'
 import type { UpdateStatus } from '../../../shared/domain/app'
 
 /**
- * 自动更新（electron-updater + generic provider）。
- * 更新源见 electron-builder.yml 的 publish 配置与 dev-app-update.yml。
+ * 自动更新（electron-updater + GitHub Releases）。
+ *
+ * 更新源与 channel（按 arch 区分：win-x64 / win-ia32）由 electron-builder.yml 的 publish 配置
+ * 在打包时写入 `resources/app-update.yml`，运行时无需再手动设置。
  */
 
 const { autoUpdater } = electronUpdater

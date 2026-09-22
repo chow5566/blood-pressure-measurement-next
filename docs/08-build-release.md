@@ -24,9 +24,11 @@
     "lint": "eslint . --ext .js,.ts,.tsx,.vue --fix",
     "rebuild:ia32": "node scripts/rebuild-native.cjs ia32",
     "rebuild:x64": "node scripts/rebuild-native.cjs x64",
-    "build:win32": "npm run build && npm run rebuild:ia32 && electron-builder --win --ia32",
-    "build:win64": "npm run build && npm run rebuild:x64 && electron-builder --win --x64",
-    "build:win": "npm run build && npm run rebuild:x64 && electron-builder --win --x64 && npm run rebuild:ia32 && electron-builder --win --ia32",
+    "build:win32": "npm run build && npm run rebuild:ia32 && electron-builder --win --ia32 --config.publish.channel=win-ia32",
+    "build:win64": "npm run build && npm run rebuild:x64 && electron-builder --win --x64 --config.publish.channel=win-x64",
+    "build:win": "npm run build && npm run rebuild:x64 && electron-builder --win --x64 --config.publish.channel=win-x64 && npm run rebuild:ia32 && electron-builder --win --ia32 --config.publish.channel=win-ia32",
+    "release:win64": "npm run build:win64 -- --publish always",
+    "release:win32": "npm run build:win32 -- --publish always",
     "build:unpack": "npm run build && electron-builder --dir"
   }
 }
@@ -36,7 +38,9 @@
 > 中单一 arch 的原生模块。`electron-builder.yml` 的 `win.target` **不固定 arch**，由 CLI 指定。
 >
 > **原生模块重建**：`scripts/rebuild-native.cjs` 优先用 `prebuild-install` 拉取与 Electron 匹配的
-> 预编译（无需 VS），失败才回退 `electron-rebuild`（需 VS Build Tools）。已实测两架构可用。
+> 预编译（无需 VS），默认走国内镜像 `https://registry.npmmirror.com/-/binary/better-sqlite3`
+> （可用环境变量 `better_sqlite3_binary_host` 覆盖），镜像失败再试 GitHub，最后才回退
+> `electron-rebuild`（需 VS Build Tools）。已实测两架构可用。
 
 ## 3. electron-builder 配置要点
 
@@ -62,9 +66,23 @@ npmRebuild: false
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/
 publish:
-  provider: generic
-  url: <更新地址>
+  provider: github
+  owner: chow5566
+  repo: blood-pressure-measurement-next
+  releaseType: release
+  updaterCacheDirName: blood-pressure-measurement-updater
 ```
+
+### 3.4 更新源与双架构 channel
+
+- 更新源使用 **GitHub Releases**（仓库需为 **public**，客户端免 token 检查）。
+- Windows 下 electron-builder 生成的更新信息文件 **不带架构后缀**，双架构会互相覆盖，
+  因此按架构使用独立 channel：
+  - `build:win64` → `win-x64.yml`
+  - `build:win32` → `win-ia32.yml`
+  channel 会写入安装包内的 `resources/app-update.yml`，应用按 `process.arch` 读取对应文件。
+- 安装包文件名改为纯 ASCII `blood-pressure-measurement-<version>-<arch>-setup.exe`：
+  GitHub 资产名不允许中文，否则会被替换成**不含 arch** 的安全名而导致双架构撞名。
 
 ### 3.3 安装时选择数据目录
 
@@ -114,9 +132,11 @@ publish:
 
 | 项 | 约定 |
 | --- | --- |
-| 渠道 | generic provider（沿用现状） |
-| 产物 | `血压及B超检测-<version>-setup.exe`（NSIS） |
-| 升级 | `latest.yml` + 差量/全量 |
+| 渠道 | GitHub Releases（public 仓库） |
+| 产物 | `blood-pressure-measurement-<version>-<arch>-setup.exe`（NSIS，ASCII 文件名） |
+| 升级 | 按架构 channel：`win-x64.yml` / `win-ia32.yml` + 差量/全量 |
+| 发布 | `GH_TOKEN=<token> npm run release:win64` 再 `npm run release:win32`（写同一 release，2 小时内可续传；超时用 `EP_GH_IGNORE_TIME=1`） |
+| 手动发布 | 在 GitHub 建 Release（tag `v<version>`）并上传两个 exe、两个 blockmap、`win-x64.yml`、`win-ia32.yml` |
 | 签名 | 可选（SHA-2）；无签名时 `publisherName` 校验需关闭 |
 | 版本号 | 语义化版本，与后端接口兼容性在 CHANGELOG 标注 |
 
