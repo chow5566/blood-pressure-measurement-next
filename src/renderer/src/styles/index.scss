@@ -1,0 +1,5 @@
+/** 样式入口：Token → Tailwind 工具类 → 基础样式 → 应用组件层 */
+@use './variables.scss';
+@use './tailwind.scss';
+@use './components.scss';
+@use './base.scss';

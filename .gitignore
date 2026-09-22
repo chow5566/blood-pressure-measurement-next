@@ -1,0 +1,35 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build output
+dist/
+out/
+build/Release/
+build/Debug/
+
+# logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+aqtinstall.log
+
+# editor / os
+.idea/
+.vscode/
+*.suo
+Thumbs.db
+Desktop.ini
+
+# env
+.env
+.env.local
+.env.*.local
+
+# electron-builder
+release/
+*.nsis
+
+# 项目排除路径
+/src/preload/index.d.ts

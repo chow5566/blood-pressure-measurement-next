@@ -1,0 +1,7 @@
+/**
+ * Tailwind 工具类（仅 components/utilities）。
+ * 不引入 preflight（base），避免覆盖 Element Plus 与自定义基础样式；
+ * 基础重置由 styles/base.scss 负责。
+ */
+@tailwind components;
+@tailwind utilities;

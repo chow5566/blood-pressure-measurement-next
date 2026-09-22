@@ -1,0 +1,57 @@
+appId: com.skzx.app
+productName: 血压及B超检测
+directories:
+  buildResources: build
+files:
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,.nvmrc,README.md}'
+  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  - '!docs/*'
+  - '!scripts/*'
+  # 体积裁剪：仅保留 Windows 预编译，去掉源码/测试/调试文件（见 docs/08 §3.3）
+  - '!node_modules/@serialport/bindings-cpp/prebuilds/{android-*,linux-*,darwin-*}'
+  - '!node_modules/better-sqlite3/{deps,src,bin}/**'
+  - '!node_modules/better-sqlite3/build/Release/{*.pdb,*.lib,*.exp,obj}/**'
+  - '!node_modules/better-sqlite3/build/Release/obj/**'
+  - '!node_modules/better-sqlite3/build/Release/test_extension.node'
+  - '!**/*.{map,ts,tsx}'
+  - '!**/{test,tests,__tests__,docs,example,examples}/**'
+  - '!**/*.md'
+asarUnpack:
+  - '**/*.node'
+extraResources:
+  - from: resources
+    to: resources
+win:
+  executableName: 血压及B超检测
+  # 不在此固定 arch：由 CLI（--x64 / --ia32）决定，确保每个架构在对应原生模块下打包
+  target: nsis
+  icon: build/favicon.ico
+  electronLanguages:
+    - en-US
+    - zh-CN
+nsis:
+  include: build/installer.nsh
+  artifactName: ${productName}-${version}-${arch}-setup.${ext}
+  shortcutName: ${productName}
+  uninstallDisplayName: ${productName}
+  oneClick: false
+  perMachine: true
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  warningsAsErrors: false
+  menuCategory: true
+  installerIcon: './build/favicon.ico'
+  uninstallerIcon: './build/favicon.ico'
+  installerHeaderIcon: './build/favicon.ico'
+# 关闭 npm rebuild，改用 @electron/rebuild 显式重建原生模块（见 docs/08-build-release.md）
+npmRebuild: false
+publish:
+  provider: generic
+  url: http://www.chealth.cn/local-data-display/localImage/upfile/blood-pressure-measurement
+  updaterCacheDirName: blood-pressure-measurement-updater
+electronDownload:
+  mirror: https://npmmirror.com/mirrors/electron/

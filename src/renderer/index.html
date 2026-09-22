@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:"
+    />
+    <title>血压及B超检测</title>
+    <!-- 主题预置：在样式/挂载前应用，避免闪烁 -->
+    <script>
+      ;(function () {
+        try {
+          var mode = localStorage.getItem('bpm.theme') || 'system'
+          var dark =
+            mode === 'dark' ||
+            (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.classList.toggle('dark', dark)
+        } catch (e) {}
+      })()
+    </script>
+    <style>
+      html,
+      body,
+      #app {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        background: #f4f4f4;
+        color: #161616;
+        font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', Arial, sans-serif;
+        font-size: 13px;
+        -webkit-font-smoothing: antialiased;
+        user-select: none;
+      }
+      html.dark body {
+        background: #161616;
+        color: #f4f4f4;
+      }
+      .splash {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        gap: 14px;
+      }
+      .splash__logo {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: #0f62fe;
+        color: #fff;
+        font-size: 20px;
+        font-weight: 600;
+      }
+      html.dark .splash__logo {
+        background: #4589ff;
+      }
+      .splash__title {
+        font-size: 11px;
+        color: #8d8d8d;
+        letter-spacing: 0.32px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div class="splash">
+        <div class="splash__logo">康</div>
+        <div class="splash__title">血压及B超检测</div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

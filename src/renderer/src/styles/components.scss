@@ -1,0 +1,674 @@
+/**
+ * 应用组件层：精密栅格视觉 + Element Plus 收敛。
+ * 零圆角、发丝线、严格对齐；仅浮层使用阴影。
+ */
+
+/* ── 面板（冷灰底上的白卡 + 轻阴影） ─────────────── */
+.app-card,
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  box-shadow: var(--sh-1);
+}
+
+.panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  min-height: var(--panel-head-h);
+  padding: 0 var(--s4);
+  border-bottom: 1px solid var(--line);
+}
+.panel__title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  letter-spacing: var(--ls-label);
+  color: var(--t1);
+}
+.panel__title small {
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  color: var(--t3);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+.panel__meta {
+  font-size: var(--fs-xs);
+  color: var(--t3);
+  font-variant-numeric: tabular-nums;
+}
+.panel__body {
+  padding: var(--s4);
+}
+
+/* 区块标题（内容内） */
+.app-section-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  letter-spacing: var(--ls-label);
+  color: var(--t1);
+}
+.app-section-title small {
+  font-weight: 400;
+  font-size: var(--fs-xs);
+  color: var(--t3);
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 微标签（全大写，工程感） */
+.label-cap {
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--t3);
+}
+
+.app-hint {
+  font-size: var(--fs-xs);
+  color: var(--t3);
+  line-height: 1.5;
+}
+
+/* ── 域内 Tab 条（血压 / B超 / 设置共用） ─────────── */
+.tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  border-bottom: 1px solid var(--line);
+}
+.tabs__item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 14px;
+  border: none;
+  background: transparent;
+  color: var(--t2);
+  font-family: inherit;
+  font-size: var(--fs-base);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+.tabs__item .ui-icon {
+  color: var(--t3);
+  transition: color 0.15s ease;
+}
+.tabs__item:hover {
+  color: var(--t1);
+  background: var(--surface-2);
+}
+.tabs__item:hover .ui-icon {
+  color: var(--t2);
+}
+.tabs__item.is-on {
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+.tabs__item.is-on .ui-icon {
+  color: var(--accent-ink);
+}
+.tabs__item.is-on::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: -1px;
+  height: 2px;
+  background: var(--accent);
+}
+
+/* ── 状态标记（方角、细线，不靠色块堆叠） ───────── */
+.app-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 20px;
+  padding: 0 6px;
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  color: var(--t2);
+  font-size: var(--fs-micro);
+  font-weight: 500;
+  letter-spacing: var(--ls-label);
+  white-space: nowrap;
+}
+.app-tag::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+.app-tag--ok {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+.app-tag--warn {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+.app-tag--danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.app-tag--info {
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+.app-tag--plain::before {
+  display: none;
+}
+
+/* ── 下拉菜单 ───────────────────────────────────── */
+.menu {
+  min-width: 188px;
+  padding: 4px 0;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 0;
+  box-shadow: var(--sh-pop);
+}
+.menu__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 30px;
+  padding: 0 12px;
+  border: none;
+  background: transparent;
+  color: var(--t1);
+  font-family: inherit;
+  font-size: var(--fs-md);
+  text-align: left;
+  cursor: pointer;
+}
+.menu__item:hover {
+  background: var(--surface-3);
+}
+.menu__item--danger:hover {
+  background: var(--danger-weak);
+  color: var(--danger);
+}
+.menu__sep {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--line);
+}
+.menu__label {
+  padding: 6px 12px 4px;
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--t3);
+}
+.menu__check {
+  display: inline-flex;
+  width: 12px;
+  visibility: hidden;
+}
+
+/* ── Element Plus：变量级收敛 ───────────────────── */
+.app-scope,
+.el-overlay,
+.el-message-box,
+.el-message,
+.el-notification,
+.el-select__popper,
+.el-popper {
+  --el-color-primary: var(--accent);
+  --el-color-primary-light-3: var(--accent-hover);
+  --el-color-primary-light-5: var(--accent-line);
+  --el-color-primary-light-7: var(--accent-line);
+  --el-color-primary-light-8: var(--accent-weak);
+  --el-color-primary-light-9: var(--accent-weak);
+  --el-color-primary-dark-2: var(--accent-active);
+  --el-color-success: var(--ok);
+  --el-color-warning: var(--warn);
+  --el-color-danger: var(--danger);
+  --el-color-error: var(--danger);
+  --el-color-info: var(--t2);
+  --el-input-border-color: var(--line-strong);
+  --el-input-hover-border-color: var(--t2);
+  --el-input-focus-border-color: var(--accent);
+  --el-input-border-radius: 0;
+  --el-fill-color-light: var(--surface-2);
+  --el-fill-color-lighter: var(--surface-2);
+  --el-fill-color-blank: var(--surface);
+  --el-bg-color: var(--surface);
+  --el-bg-color-overlay: var(--surface);
+  --el-border-color: var(--line-strong);
+  --el-border-color-light: var(--line);
+  --el-border-color-lighter: var(--line);
+  --el-text-color-primary: var(--t1);
+  --el-text-color-regular: var(--t2);
+  --el-text-color-secondary: var(--t3);
+  --el-text-color-placeholder: var(--t3);
+  --el-box-shadow-light: var(--sh-2);
+}
+
+.el-button {
+  border-radius: 0;
+  font-weight: 400;
+  box-shadow: none;
+}
+.el-button:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(
+    .el-button--danger
+  ):not(.is-text):not(.is-link) {
+  --el-button-bg-color: var(--surface);
+  --el-button-hover-bg-color: var(--surface-3);
+  --el-button-active-bg-color: var(--surface-3);
+  --el-button-border-color: var(--line-strong);
+  --el-button-hover-border-color: var(--t2);
+}
+/* 主按钮：统一「绿底黑字」（作用域提高优先级，避免被 EP 运行期样式覆盖） */
+.app-scope .el-button--primary,
+.el-overlay .el-button--primary,
+.el-message-box .el-button--primary {
+  --el-button-bg-color: var(--accent);
+  --el-button-border-color: var(--accent);
+  --el-button-text-color: var(--on-accent);
+  --el-button-hover-bg-color: var(--accent-hover);
+  --el-button-hover-border-color: var(--accent-hover);
+  --el-button-hover-text-color: var(--on-accent);
+  --el-button-active-bg-color: var(--accent-active);
+  --el-button-active-border-color: var(--accent-active);
+  --el-button-active-text-color: var(--on-accent);
+}
+
+/* plain 主按钮：中性描边 + 绿色文字（减少绿色面积） */
+.app-scope .el-button--primary.is-plain,
+.el-overlay .el-button--primary.is-plain {
+  --el-button-text-color: var(--accent-ink);
+  --el-button-bg-color: var(--surface);
+  --el-button-border-color: var(--line-strong);
+  --el-button-hover-bg-color: var(--surface-3);
+  --el-button-hover-border-color: var(--t3);
+  --el-button-hover-text-color: var(--accent-ink);
+  --el-button-active-bg-color: var(--surface-3);
+  --el-button-active-border-color: var(--t3);
+}
+
+/* 相邻按钮：去掉 EP 自带的 margin-left，统一由容器 gap 控制 */
+.app-scope .el-button + .el-button,
+.el-overlay .el-dialog .el-button + .el-button {
+  margin-left: 0;
+}
+
+/* 输入 / 下拉 */
+.app-scope .el-input__wrapper,
+.app-scope .el-select__wrapper,
+.app-scope .el-textarea__inner,
+.el-overlay .el-input__wrapper,
+.el-overlay .el-textarea__inner,
+.el-message-box .el-input__wrapper {
+  border-radius: 0;
+  box-shadow: 0 0 0 1px var(--line-strong) inset;
+}
+.app-scope .el-input__wrapper.is-focus,
+.app-scope .el-select__wrapper.is-focused {
+  box-shadow: 0 0 0 1px var(--accent) inset;
+}
+.app-scope .el-textarea__inner {
+  border: 1px solid var(--line-strong);
+  box-shadow: none !important;
+}
+.app-scope .el-textarea__inner:focus {
+  border-color: var(--accent);
+}
+
+/* 表格：严格栅格 */
+.app-scope .el-table {
+  --el-table-border-color: var(--line);
+  --el-table-header-bg-color: var(--surface-2);
+  --el-table-header-text-color: var(--t2);
+  --el-table-row-hover-bg-color: var(--accent-weak);
+  --el-table-current-row-bg-color: var(--accent-weak);
+  font-size: var(--fs-md);
+}
+.app-scope .el-table th.el-table__cell {
+  font-weight: 600;
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+}
+.app-scope .el-table .cell {
+  line-height: 1.4;
+  padding: 0 8px;
+}
+.app-scope .el-table--small .el-table__cell {
+  padding: 4px 0;
+}
+/* 选中行：主题色底 + 深色文字（stripe 会覆盖默认高亮，故用 !important） */
+.app-scope .el-table__body tr.current-row > td.el-table__cell {
+  background-color: var(--accent) !important;
+  color: var(--on-accent);
+}
+.app-scope .el-table__body tr.current-row:hover > td.el-table__cell {
+  background-color: var(--accent) !important;
+}
+
+/* 标签：方角细线 */
+.app-scope .el-tag,
+.el-tag {
+  border: 1px solid transparent;
+  border-radius: 0;
+  font-weight: 500;
+  height: 20px;
+  line-height: 18px;
+  padding: 0 6px;
+}
+
+.app-scope .el-radio-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.app-scope .el-radio {
+  margin-right: 0;
+}
+.app-scope .el-radio.is-bordered {
+  border-radius: 0;
+  height: var(--ctrl-h);
+}
+
+/* 只读展示：disabled 控件与只读输入框外观一致（不置灰） */
+.app-scope .el-input.is-disabled .el-input__wrapper,
+.app-scope .el-select.is-disabled .el-select__wrapper,
+.app-scope .el-textarea.is-disabled .el-textarea__inner {
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--line) inset;
+  cursor: default;
+}
+.app-scope .el-input.is-disabled .el-input__inner,
+.app-scope .el-textarea.is-disabled .el-textarea__inner,
+.app-scope .el-select.is-disabled .el-select__selected-item,
+.app-scope .el-select.is-disabled .el-select__placeholder {
+  color: var(--t1);
+  -webkit-text-fill-color: var(--t1);
+}
+.app-scope .el-radio.is-disabled .el-radio__label {
+  color: var(--t1);
+}
+.app-scope .el-radio.is-disabled .el-radio__inner {
+  background: var(--surface);
+  border-color: var(--line-strong);
+}
+.app-scope .el-radio.is-bordered.is-disabled {
+  border-color: var(--line-strong);
+  background: var(--surface);
+}
+.app-scope .el-radio.is-disabled.is-checked .el-radio__inner {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* 选中态：统一深绿填充 + 白勾/白点 + 深绿标签（同色相，避免黑白混搭） */
+.app-scope .el-checkbox__input.is-checked .el-checkbox__inner,
+.el-overlay .el-checkbox__input.is-checked .el-checkbox__inner {
+  background-color: var(--accent-control);
+  border-color: var(--accent-control);
+}
+.app-scope .el-radio__input.is-checked .el-radio__inner,
+.el-overlay .el-radio__input.is-checked .el-radio__inner {
+  background-color: var(--accent-control);
+  border-color: var(--accent-control);
+}
+.app-scope .el-checkbox__input.is-checked + .el-checkbox__label,
+.app-scope .el-radio__input.is-checked + .el-radio__label,
+.el-overlay .el-checkbox__input.is-checked + .el-checkbox__label,
+.el-overlay .el-radio__input.is-checked + .el-radio__label {
+  color: var(--accent-ink);
+}
+.app-scope .el-radio.is-bordered.is-checked,
+.el-overlay .el-radio.is-bordered.is-checked {
+  border-color: var(--accent-control);
+}
+
+/* 遮罩层：半透明 + 背景模糊（毛玻璃） */
+.el-overlay {
+  background-color: rgba(0, 0, 0, 0.35);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+html.dark .el-overlay {
+  background-color: rgba(0, 0, 0, 0.55);
+}
+
+/* 图片查看器遮罩：同样做背景模糊 */
+.el-image-viewer__mask {
+  background-color: rgba(0, 0, 0, 0.45);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+html.dark .el-image-viewer__mask {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+/* 对话框 / 消息框：方角（.el-overlay 前缀提高优先级，避免被 EP 运行期样式覆盖） */
+.el-overlay .el-dialog {
+  border-radius: 0;
+  box-shadow: var(--sh-pop);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  padding: 0;
+}
+.el-overlay .el-dialog__header {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 52px 0 var(--s4);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+}
+.el-overlay .el-dialog.is-draggable .el-dialog__header {
+  cursor: move;
+  user-select: none;
+}
+.el-overlay .el-dialog__title {
+  font-size: var(--fs-md);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: var(--ls-label);
+  color: var(--t1);
+}
+.el-overlay .el-dialog__headerbtn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.el-overlay .el-dialog__headerbtn:hover {
+  background: var(--surface-3);
+}
+.el-overlay .el-dialog__headerbtn .el-dialog__close {
+  color: var(--t2);
+}
+.el-overlay .el-dialog__body {
+  padding: var(--s4);
+}
+.el-overlay .el-dialog__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-card);
+  padding: var(--s3) var(--s4);
+  border-top: 1px solid var(--line);
+}
+.el-message-box {
+  border-radius: 0;
+  background: var(--surface);
+  box-shadow: var(--sh-pop);
+  border: 1px solid var(--line-strong);
+  padding-bottom: 12px;
+}
+.el-message,
+.el-notification {
+  border-radius: 0;
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--sh-2);
+  background: var(--surface);
+}
+.el-popper.is-light {
+  border: 1px solid var(--line-strong);
+  border-radius: 0;
+  box-shadow: var(--sh-2);
+}
+
+.app-scope .el-form-item__label {
+  color: var(--t2);
+  font-weight: 400;
+}
+.app-scope .el-form-item.is-error .el-input__wrapper {
+  box-shadow: 0 0 0 1px var(--danger) inset;
+}
+
+/* ── Element Plus：圆角统一为 0（含自带圆角的部件） ── */
+.app-scope .el-button.is-round,
+.app-scope .el-button.is-circle,
+.el-overlay .el-button.is-round,
+.el-overlay .el-button.is-circle {
+  border-radius: 0;
+}
+
+.app-scope .el-radio__inner,
+.app-scope .el-checkbox__inner,
+.app-scope .el-radio.is-bordered,
+.app-scope .el-radio-button__inner,
+.app-scope .el-checkbox-button__inner,
+.app-scope .el-switch__core,
+.el-popper .el-switch__core {
+  border-radius: 0;
+}
+.app-scope .el-radio-button:first-child .el-radio-button__inner,
+.app-scope .el-radio-button:last-child .el-radio-button__inner,
+.app-scope .el-checkbox-button:first-child .el-checkbox-button__inner,
+.app-scope .el-checkbox-button:last-child .el-checkbox-button__inner {
+  border-radius: 0;
+}
+
+.app-scope .el-slider__runway,
+.app-scope .el-slider__bar,
+.app-scope .el-slider__button,
+.el-popper .el-slider__runway,
+.el-popper .el-slider__bar,
+.el-popper .el-slider__button {
+  border-radius: 0;
+}
+.app-scope .el-slider__button,
+.el-popper .el-slider__button {
+  width: 12px;
+  height: 12px;
+}
+
+.app-scope .el-pagination .el-pager li,
+.app-scope .el-pagination button,
+.app-scope .el-pagination.is-background .el-pager li,
+.app-scope .el-pagination.is-background button {
+  border-radius: 0;
+}
+
+.app-scope .el-progress-bar__outer,
+.app-scope .el-progress-bar__inner,
+.el-progress-bar__outer,
+.el-progress-bar__inner {
+  border-radius: 0;
+}
+
+.app-scope .el-scrollbar__thumb,
+.app-scope .el-loading-mask,
+.el-select__popper .el-scrollbar__thumb {
+  border-radius: 0;
+}
+
+.el-picker-panel,
+.el-picker-panel__content,
+.el-date-table td .el-date-table-cell__text,
+.el-date-table td.start-date .el-date-table-cell__text,
+.el-date-table td.end-date .el-date-table-cell__text,
+.el-date-range-picker__content,
+.el-time-panel,
+.el-time-spinner__item {
+  border-radius: 0;
+}
+
+.el-select-dropdown__item,
+.el-dropdown-menu,
+.el-dropdown-menu__item {
+  border-radius: 0;
+}
+
+/* forced radius 0 (Element Plus, needs !important due to injection order) */
+.app-scope .el-button,
+.app-scope .el-button.is-round,
+.app-scope .el-button.is-circle,
+.app-scope .el-input__wrapper,
+.app-scope .el-select__wrapper,
+.app-scope .el-textarea__inner,
+.app-scope .el-input__inner,
+.app-scope .el-tag,
+.app-scope .el-radio__inner,
+.app-scope .el-checkbox__inner,
+.app-scope .el-radio-button__inner,
+.app-scope .el-checkbox-button__inner,
+.app-scope .el-switch__core,
+.app-scope .el-slider__runway,
+.app-scope .el-slider__bar,
+.app-scope .el-slider__button,
+.app-scope .el-progress-bar__outer,
+.app-scope .el-progress-bar__inner,
+.app-scope .el-scrollbar__thumb,
+.app-scope .el-loading-mask,
+.app-scope .el-pagination .el-pager li,
+.app-scope .el-pagination button,
+.el-overlay .el-button,
+.el-overlay .el-button.is-round,
+.el-overlay .el-button.is-circle,
+.el-overlay .el-input__wrapper,
+.el-overlay .el-select__wrapper,
+.el-overlay .el-textarea__inner,
+.el-overlay .el-tag,
+.el-overlay .el-radio-button__inner,
+.el-overlay .el-checkbox-button__inner,
+.el-message-box,
+.el-message-box .el-button,
+.el-message-box .el-input__wrapper,
+.el-message,
+.el-notification,
+.el-dialog,
+.el-popper,
+.el-popper .el-button,
+.el-popper .el-switch__core,
+.el-popper .el-slider__runway,
+.el-popper .el-slider__bar,
+.el-popper .el-slider__button,
+.el-select__popper .el-select-dropdown__item,
+.el-popper .el-select-dropdown__item,
+.el-popper .el-picker-panel,
+.el-popper .el-date-table td .el-date-table-cell__text,
+.el-popper .el-time-panel,
+.el-popper .el-time-spinner__item {
+  border-radius: 0 !important;
+}
