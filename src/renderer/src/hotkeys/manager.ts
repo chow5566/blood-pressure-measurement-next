@@ -74,6 +74,11 @@ function isTypingTarget(target: EventTarget | null): boolean {
   return tag === 'INPUT' || tag === 'TEXTAREA' || el.isContentEditable === true
 }
 
+/** 是否为功能键（F1–F12）：功能键不产生字符输入，聚焦输入框时也允许触发 */
+function isFunctionKey(code: string): boolean {
+  return /^F([1-9]|1[0-2])$/.test(code)
+}
+
 function onKeydown(event: KeyboardEvent): void {
   if (event.repeat || event.isComposing) return
   const config = configGetter()
@@ -86,7 +91,8 @@ function onKeydown(event: KeyboardEvent): void {
       const def = defsById.get(id)
       const combo = config[id] ?? def?.default
       if (!combo || !combo.key || !matchesHotkey(event, combo)) continue
-      if (isTypingTarget(event.target) && !def?.allowInInput) continue
+      // 输入框聚焦时：除显式 allowInInput 外，仅放行功能键
+      if (isTypingTarget(event.target) && !def?.allowInInput && !isFunctionKey(combo.key)) continue
       event.preventDefault()
       event.stopPropagation()
       handler(event)
