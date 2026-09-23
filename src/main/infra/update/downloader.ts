@@ -89,9 +89,10 @@ interface BreakpointMeta {
   total?: number
 }
 
-const EMIT_INTERVAL_MS = 200
+const EMIT_INTERVAL_MS = 500
 const TEARDOWN_TIMEOUT_MS = 800
 const OFFLINE_CHECK_MS = 5000
+const STALL_CHECK_MS = 5000
 
 const DEFAULT_RETRY: RetryPolicy = {
   maxAttempts: 8,
@@ -150,7 +151,8 @@ export class ResumableDownloader {
   private lastBytes = 0
   private lastTime = 0
   private retryTimer: ReturnType<typeof setTimeout> | null = null
-  private stallTimer: ReturnType<typeof setTimeout> | null = null
+  private stallTimer: ReturnType<typeof setInterval> | null = null
+  private lastDataAt = 0
   private readonly metaFile: string
   private readonly policy: RetryPolicy
 
@@ -236,7 +238,8 @@ export class ResumableDownloader {
     this.lastBytes = startAt
     this.lastTime = Date.now()
     this.lastEmit = 0
-    this.resetStall(token, attemptToken)
+    this.lastDataAt = Date.now()
+    this.startStallWatch(token, attemptToken)
     this.fetch(token, attemptToken, startAt)
   }
 
@@ -286,12 +289,15 @@ export class ResumableDownloader {
     }, delayMs)
   }
 
-  private resetStall(token: number, attemptToken: number): void {
+  /** 单一定时器轮询卡死：避免每个数据块都重置定时器 */
+  private startStallWatch(token: number, attemptToken: number): void {
     this.clearStall()
-    this.stallTimer = setTimeout(() => {
+    this.stallTimer = setInterval(() => {
       if (!this.isAttemptActive(token, attemptToken)) return
-      this.handleTransient(token, '连接超时（长时间无数据）')
-    }, this.policy.stallTimeoutMs)
+      if (Date.now() - this.lastDataAt > this.policy.stallTimeoutMs) {
+        this.handleTransient(token, '连接超时（长时间无数据）')
+      }
+    }, STALL_CHECK_MS)
   }
 
   private clearRetry(): void {
@@ -303,7 +309,7 @@ export class ResumableDownloader {
 
   private clearStall(): void {
     if (this.stallTimer) {
-      clearTimeout(this.stallTimer)
+      clearInterval(this.stallTimer)
       this.stallTimer = null
     }
   }
@@ -510,7 +516,7 @@ export class ResumableDownloader {
 
     response.on('data', (chunk: Buffer) => {
       if (!this.isAttemptActive(token, attemptToken)) return
-      this.resetStall(token, attemptToken)
+      this.lastDataAt = Date.now()
       const canContinue = stream.write(chunk)
       this.transferred += chunk.length
       this.emitProgress()

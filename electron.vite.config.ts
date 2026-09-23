@@ -54,7 +54,30 @@ export default defineConfig({
     build: {
       target: 'chrome108',
       rollupOptions: {
-        input: { index: resolve(__dirname, 'src/renderer/index.html') }
+        input: { index: resolve(__dirname, 'src/renderer/index.html') },
+        output: {
+          // 拆分第三方依赖为共享 chunk：避免每个路由 chunk 重复打包/解析，改善首次进入页面的卡顿
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return undefined
+            if (id.includes('element-plus') || id.includes('@element-plus')) return 'element-plus'
+            if (
+              id.includes('/vue/') ||
+              id.includes('vue-router') ||
+              id.includes('/pinia/') ||
+              id.includes('@vue/')
+            ) {
+              return 'vue'
+            }
+            if (
+              id.includes('docx-preview') ||
+              id.includes('html2canvas') ||
+              id.includes('pizzip')
+            ) {
+              return 'report'
+            }
+            return 'vendor'
+          }
+        }
       }
     }
   }

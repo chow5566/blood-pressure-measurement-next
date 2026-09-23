@@ -46,6 +46,7 @@ declare module 'vue' {
     UiIcon: typeof import('./../../components/ui/UiIcon.vue')['default']
     UiInput: typeof import('./../../components/ui/UiInput.vue')['default']
     UiLogo: typeof import('./../../components/ui/UiLogo.vue')['default']
+    UpdateChip: typeof import('./../../components/UpdateChip.vue')['default']
     UpdateDialog: typeof import('./../../components/UpdateDialog.vue')['default']
     VideoView: typeof import('./../../components/video/VideoView.vue')['default']
     WindowControls: typeof import('./../../components/WindowControls.vue')['default']
