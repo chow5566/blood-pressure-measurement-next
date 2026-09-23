@@ -82,11 +82,11 @@
               <div class="links">
                 <button class="link" type="button" @click="handleOffline">离线使用</button>
                 <span class="links__sep"></span>
-                <button class="link" type="button" @click="showServer = true">服务器设置</button>
+                <button class="link" type="button" @click="openServer">服务器设置</button>
               </div>
             </div>
 
-            <!-- 背面：服务器设置（翻转展示） -->
+            <!-- 背面：服务器设置（翻转展示，带标签） -->
             <div class="flip__face flip__face--back">
               <div class="brand brand--compact">
                 <div class="brand__name">服务器设置</div>
@@ -98,21 +98,22 @@
                 :model="serverForm"
                 :rules="serverRules"
                 class="form"
+                label-position="top"
                 hide-required-asterisk
               >
-                <el-form-item prop="baseApi">
+                <el-form-item label="接口地址" prop="baseApi">
                   <el-input
                     v-model="serverForm.baseApi"
                     size="large"
-                    placeholder="接口地址 http://…/health-display-local/"
+                    placeholder="http://…/health-display-local/"
                   />
                 </el-form-item>
 
-                <el-form-item prop="staticApi">
+                <el-form-item label="静态资源地址" prop="staticApi">
                   <el-input
                     v-model="serverForm.staticApi"
                     size="large"
-                    placeholder="静态资源地址 http://…/local-data-display/"
+                    placeholder="http://…/local-data-display/"
                   />
                 </el-form-item>
 
@@ -151,9 +152,9 @@ import { useConfigStore } from '@r/stores/config'
 import { useUserStore } from '@r/stores/user'
 import { toast } from '@r/utils/toast'
 import { uuid } from '@shared/utils/uuid'
-import type { LoginResult } from '@shared/domain/app'
+import { DEFAULT_BASE_API, DEFAULT_STATIC_API, type LoginResult } from '@shared/domain/app'
 
-/** 登录页：账号登录 / 离线使用 / 服务地址设置（翻转卡片 + el-form 校验） */
+/** 登录页：账号登录 / 离线使用 / 服务器设置（翻转卡片 + el-form 校验） */
 const emit = defineEmits<{ enter: []; offline: [] }>()
 
 const config = useConfigStore()
@@ -191,7 +192,6 @@ async function refreshCaptcha(): Promise<void> {
 
 /** 是否翻转到「服务器设置」背面 */
 const showServer = ref(false)
-/** 服务器设置表单 + 校验（带出本地已保存地址） */
 const serverForm = reactive({ baseApi: config.baseApi, staticApi: config.staticApi })
 const serverFormRef = ref<FormInstance>()
 
@@ -206,19 +206,21 @@ function syncServerForm(): void {
   serverForm.staticApi = config.staticApi
 }
 
-/** 恢复默认地址（默认值由主进程下发） */
+/** 打开服务器设置：回填当前配置后翻转 */
+function openServer(): void {
+  syncServerForm()
+  showServer.value = true
+}
+
+/** 恢复默认地址（默认值由主进程下发，兜底用共享常量） */
 function restoreServerDefaults(): void {
-  serverForm.baseApi = config.defaultBaseApi
-  serverForm.staticApi = config.defaultStaticApi
+  serverForm.baseApi = config.defaultBaseApi || DEFAULT_BASE_API
+  serverForm.staticApi = config.defaultStaticApi || DEFAULT_STATIC_API
   serverFormRef.value?.clearValidate()
 }
 
 // 本地配置（异步）加载或变更后回填
 watch(() => [config.baseApi, config.staticApi], syncServerForm)
-// 每次打开服务器设置都回填一次最新值
-watch(showServer, (value) => {
-  if (value) syncServerForm()
-})
 
 const REMEMBER_KEY = 'bpm.remember.username'
 
@@ -408,7 +410,7 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
   letter-spacing: var(--ls-label);
 }
 
-/* 表单项：使用 Element Plus 默认间距（错误提示为绝对定位，默认间距即为预留高度） */
+/* 表单项：使用 Element Plus 默认间距（错误提示绝对定位，默认间距即预留高度） */
 
 .captcha {
   display: flex;

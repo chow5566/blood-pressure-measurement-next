@@ -3,6 +3,11 @@
 /** 窗口模式：登录（小窗、锁定尺寸） / 主应用（大窗、可缩放） */
 export type WindowMode = 'login' | 'main'
 
+/** 默认服务端接口地址（后端契约，不可变更） */
+export const DEFAULT_BASE_API = 'http://www.chealth.cn/health-display-local/'
+/** 默认静态资源地址 */
+export const DEFAULT_STATIC_API = 'http://www.chealth.cn/local-data-display/'
+
 /** 采集快捷键（key 使用 KeyboardEvent.code，如 F3 / KeyS） */
 export interface PhotoHotkey {
   key: string

@@ -108,11 +108,18 @@
         <span class="footer__item">v{{ config.version }}</span>
       </footer>
     </div>
+
+    <!-- 登录/退出切换遮罩：窗口缩放期间显示品牌闪屏，避免露出不匹配画面 -->
+    <div v-if="switching" class="switching-mask">
+      <UiLogo :size="48" />
+      <div class="switching-mask__title">血压及B超检测</div>
+      <div class="switching-mask__bar"><span></span></div>
+    </div>
   </el-config-provider>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import LoginView from '@r/views/LoginView.vue'
 import WindowControls from '@r/components/WindowControls.vue'
@@ -143,11 +150,46 @@ const updateStore = useUpdateStore()
 const route = useRoute()
 const router = useRouter()
 const entered = ref(false)
+/** 登录/退出切换中：盖一层品牌遮罩，避免窗口缩放时露出不匹配的画面 */
+const switching = ref(false)
 
-// 登录态切换窗口模式：登录小窗 ↔ 主应用大窗
-watch(entered, (value) => {
-  void windowApi.setMode(value ? 'main' : 'login')
-})
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+/** 等待两帧，确保 DOM（遮罩）已真正绘制 */
+function nextFrame(): Promise<void> {
+  return new Promise((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+  )
+}
+
+/** 进入应用：先绘制遮罩 → 放大窗口 → 渲染主界面 → 揭开遮罩 */
+async function enterApp(): Promise<void> {
+  if (switching.value) return
+  switching.value = true
+  await nextTick()
+  await nextFrame()
+  await windowApi.setMode('main')
+  entered.value = true
+  await nextTick()
+  await delay(280)
+  switching.value = false
+  void autoCheckUpdate()
+  prefetchRoutes()
+}
+
+/** 退出登录：先绘制遮罩 → 渲染登录页 → 缩小窗口 → 揭开遮罩 */
+async function leaveApp(): Promise<void> {
+  if (switching.value) return
+  switching.value = true
+  entered.value = false
+  await nextTick()
+  await nextFrame()
+  await windowApi.setMode('login')
+  await delay(280)
+  switching.value = false
+}
 
 type MenuId = 'user'
 const openMenu = ref<MenuId | null>(null)
@@ -220,14 +262,11 @@ function go(path: string): void {
 
 function handleEnter(): void {
   userStore.isOnline = 'Y'
-  entered.value = true
-  void autoCheckUpdate()
-  prefetchRoutes()
+  void enterApp()
 }
 function handleOffline(): void {
   userStore.isOnline = 'N'
-  entered.value = true
-  prefetchRoutes()
+  void enterApp()
 }
 
 /**
@@ -260,7 +299,7 @@ async function handleLogout(): Promise<void> {
   } finally {
     await config.load()
     userStore.isOnline = 'N'
-    entered.value = false
+    await leaveApp()
   }
 }
 
@@ -499,5 +538,45 @@ async function autoCheckUpdate(): Promise<void> {
 }
 .dot.is-online {
   background: var(--ok);
+}
+
+/* 登录/退出切换遮罩（品牌闪屏） */
+.switching-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: var(--bg);
+  -webkit-app-region: drag;
+}
+.switching-mask__title {
+  font-size: var(--fs-xs);
+  color: var(--t3);
+  letter-spacing: var(--ls-label);
+}
+.switching-mask__bar {
+  width: 120px;
+  height: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.switching-mask__bar span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: var(--accent);
+  animation: switching-slide 1s ease-in-out infinite;
+}
+@keyframes switching-slide {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
 }
 </style>

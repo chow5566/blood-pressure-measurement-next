@@ -3,11 +3,13 @@ import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import Store from 'electron-store'
-import type {
-  BScanPrefs,
-  HotkeyConfig,
-  ReportTemplateConfig,
-  VideoFilterConfig
+import {
+  DEFAULT_BASE_API,
+  DEFAULT_STATIC_API,
+  type BScanPrefs,
+  type HotkeyConfig,
+  type ReportTemplateConfig,
+  type VideoFilterConfig
 } from '../../shared/domain/app'
 import { DEFAULT_HOTKEYS } from '../../shared/domain/hotkeys'
 
@@ -56,11 +58,6 @@ const DEFAULT_REPORT_TEMPLATE: ReportTemplateConfig = { title: '社区卫生服�
 
 /** 默认 B超采集偏好 */
 const DEFAULT_BSCAN_PREFS: BScanPrefs = { type: 'GW', defaultCheckPic: true, online: true }
-
-/** 默认服务端地址（与旧项目一致，后端接口不可修改） */
-const DEFAULT_BASE_API = 'http://www.chealth.cn/health-display-local/'
-/** 默认静态资源地址 */
-const DEFAULT_STATIC_API = 'http://www.chealth.cn/local-data-display/'
 
 /** 默认服务端接口地址（供「恢复默认」使用） */
 export function getDefaultBaseApi(): string {
