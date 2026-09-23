@@ -3,7 +3,7 @@
     <div class="bp-measure__bar">
       <div class="app-section-title">
         血压检测
-        <small>{{ displayPorts.length }} 台设备</small>
+        <small v-if="displayPorts.length">{{ displayPorts.length }} 台设备</small>
       </div>
       <div class="bp-measure__bar-actions">
         <span v-if="displayPorts.length" class="app-hint">血压计用户 A = 左侧，用户 B = 右侧</span>
