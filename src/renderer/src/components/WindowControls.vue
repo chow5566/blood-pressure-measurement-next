@@ -3,7 +3,12 @@
     <button class="wc" title="最小化" @click="minimize">
       <UiIcon name="minus" :size="16" />
     </button>
-    <button class="wc" :title="maximized ? '还原' : '最大化'" @click="toggleMaximize">
+    <button
+      v-if="showMaximize"
+      class="wc"
+      :title="maximized ? '还原' : '最大化'"
+      @click="toggleMaximize"
+    >
       <UiIcon :name="maximized ? 'restore' : 'square'" :size="14" />
     </button>
     <button class="wc wc--close" title="关闭" @click="close">
@@ -18,6 +23,8 @@ import UiIcon from './ui/UiIcon.vue'
 import { windowApi } from '@r/api/window'
 
 /** 无边框窗口的自定义控件（自建） */
+withDefaults(defineProps<{ showMaximize?: boolean }>(), { showMaximize: true })
+
 const maximized = ref(false)
 let unsubscribe: (() => void) | null = null
 

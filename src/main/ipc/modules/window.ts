@@ -1,5 +1,6 @@
 import { BrowserWindow } from 'electron'
 import { handle } from '../registry'
+import { applyWindowMode } from '../../infra/window-manager'
 
 /**
  * 窗口控制 IPC（无边框窗口的自定义最小化/最大化/关闭）。
@@ -26,4 +27,9 @@ export function registerWindowIpc(): void {
   })
 
   handle('window:is-maximized', (event) => winOf(event.sender)?.isMaximized() ?? false)
+
+  handle('window:set-mode', (event, mode) => {
+    const win = winOf(event.sender)
+    if (win) applyWindowMode(win, mode)
+  })
 }

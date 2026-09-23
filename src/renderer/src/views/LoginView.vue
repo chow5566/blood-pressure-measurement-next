@@ -1,91 +1,96 @@
 <template>
   <div class="login">
-    <!-- 顶部拖拽栏 + 窗口控件（无边框窗口） -->
+    <!-- 顶部拖拽栏 + 窗口控件（无边框窗口；登录窗不可最大化） -->
     <header class="login__bar">
       <div class="no-drag">
-        <WindowControls />
+        <WindowControls :show-maximize="false" />
       </div>
     </header>
 
     <main class="login__center">
       <div class="login__panel no-drag">
-        <div class="login__head">
-          <UiLogo :size="44" />
-          <h1 class="login__title">血压及B超检测</h1>
-          <p class="login__subtitle">社区体检工作站</p>
-        </div>
+        <div class="flip" :class="{ 'is-flipped': showServer }">
+          <div class="flip__inner">
+            <!-- 正面：登录 -->
+            <div class="flip__face flip__face--front">
+              <div class="brand">
+                <UiLogo :size="64" />
+                <div class="brand__name">血压及B超检测</div>
+                <div class="brand__sub">社区体检工作站</div>
+              </div>
 
-        <div class="login__sep"></div>
+              <form class="form" @submit.prevent="handleLogin">
+                <UiInput v-model="form.username" size="lg" placeholder="请输入账号" />
+                <UiInput
+                  v-model="form.password"
+                  size="lg"
+                  type="password"
+                  placeholder="请输入密码"
+                />
+                <div class="captcha">
+                  <UiInput v-model="form.captcha" size="lg" placeholder="请输入验证码" />
+                  <button
+                    class="captcha__img"
+                    type="button"
+                    title="点击刷新验证码"
+                    @click="refreshCaptcha"
+                  >
+                    <img v-if="captchaImg" :src="captchaImg" alt="验证码" />
+                    <span v-else>{{ captchaLoading ? '加载中…' : '点击刷新' }}</span>
+                  </button>
+                </div>
 
-        <form class="login__form" @submit.prevent="handleLogin">
-          <div class="field">
-            <label class="label-cap">账号</label>
-            <UiInput v-model="form.username" size="lg" placeholder="请输入账号" />
-          </div>
+                <label class="remember">
+                  <input v-model="form.rememberMe" type="checkbox" />
+                  <span>记住账号</span>
+                </label>
 
-          <div class="field">
-            <label class="label-cap">密码</label>
-            <UiInput v-model="form.password" size="lg" type="password" placeholder="请输入密码" />
-          </div>
+                <UiButton variant="primary" size="lg" block :loading="loading" native-type="submit">
+                  登录
+                </UiButton>
+              </form>
 
-          <div class="field">
-            <label class="label-cap">验证码</label>
-            <div class="captcha">
-              <UiInput v-model="form.captcha" size="lg" placeholder="请输入验证码" />
-              <button
-                class="captcha__img"
-                type="button"
-                title="点击刷新验证码"
-                @click="refreshCaptcha"
-              >
-                <img v-if="captchaImg" :src="captchaImg" alt="验证码" />
-                <span v-else>{{ captchaLoading ? '加载中…' : '点击刷新' }}</span>
-              </button>
+              <div v-if="error" class="error">{{ error }}</div>
+
+              <div class="links">
+                <button class="link" type="button" @click="handleOffline">离线使用</button>
+                <span class="links__sep"></span>
+                <button class="link" type="button" @click="showServer = true">服务器设置</button>
+              </div>
             </div>
-          </div>
 
-          <div class="login__row">
-            <label class="remember">
-              <input v-model="form.rememberMe" type="checkbox" />
-              <span>记住账号</span>
-            </label>
-          </div>
+            <!-- 背面：服务器设置（翻转展示） -->
+            <div class="flip__face flip__face--back">
+              <div class="brand brand--compact">
+                <div class="brand__name">服务器设置</div>
+                <div class="brand__sub">配置后端接口与静态资源地址</div>
+              </div>
 
-          <UiButton variant="primary" size="lg" block :loading="loading" native-type="submit">
-            登录
-          </UiButton>
-        </form>
-
-        <div v-if="error" class="login__error">{{ error }}</div>
-
-        <div class="login__links">
-          <button class="link" type="button" @click="handleOffline">离线使用</button>
-          <span class="links__sep"></span>
-          <button class="link" type="button" @click="showServer = !showServer">服务器设置</button>
-        </div>
-
-        <div v-if="showServer" class="login__server">
-          <div class="field">
-            <label class="label-cap">接口地址</label>
-            <UiInput v-model="serverForm.baseApi" placeholder="http://…/health-display-local/" />
-          </div>
-          <div class="field">
-            <label class="label-cap">静态资源地址</label>
-            <UiInput v-model="serverForm.staticApi" placeholder="http://…/local-data-display/" />
-          </div>
-          <div class="server__actions">
-            <span class="hint">保存后即可用该地址登录</span>
-            <UiButton variant="secondary" size="sm" @click="saveServer">保存</UiButton>
+              <div class="form">
+                <UiInput
+                  v-model="serverForm.baseApi"
+                  size="lg"
+                  placeholder="http://…/health-display-local/"
+                />
+                <UiInput
+                  v-model="serverForm.staticApi"
+                  size="lg"
+                  placeholder="http://…/local-data-display/"
+                />
+                <div class="actions">
+                  <UiButton variant="secondary" size="lg" @click="showServer = false">
+                    返回
+                  </UiButton>
+                  <UiButton variant="primary" size="lg" @click="saveServer">保存</UiButton>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </main>
 
-    <footer class="login__foot">
-      <span>v{{ config.version }}</span>
-      <span class="links__sep"></span>
-      <span>离线可使用本地功能</span>
-    </footer>
+    <footer class="login__foot">v{{ config.version }}</footer>
   </div>
 </template>
 
@@ -102,7 +107,7 @@ import { toast } from '@r/utils/toast'
 import { uuid } from '@shared/utils/uuid'
 import type { LoginResult } from '@shared/domain/app'
 
-/** 登录页：账号登录 / 离线使用 / 服务地址设置 */
+/** 登录页：账号登录 / 离线使用 / 服务地址设置（翻转卡片） */
 const emit = defineEmits<{ enter: []; offline: [] }>()
 
 const config = useConfigStore()
@@ -130,6 +135,7 @@ async function refreshCaptcha(): Promise<void> {
   }
 }
 
+/** 是否翻转到「服务器设置」背面 */
 const showServer = ref(false)
 const serverForm = reactive({ baseApi: config.baseApi, staticApi: config.staticApi })
 
@@ -245,53 +251,65 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--s5);
+  padding: 0 var(--s5) var(--s4);
 }
 
 .login__panel {
-  width: 384px;
-  padding: var(--s7) var(--s6) var(--s5);
-  background: var(--surface);
-  border: 1px solid var(--line-strong);
+  width: 300px;
 }
 
-.login__head {
+/* ── 翻转卡片 ─────────────────────────────── */
+.flip {
+  perspective: 1400px;
+}
+.flip__inner {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.flip.is-flipped .flip__inner {
+  transform: rotateY(180deg);
+}
+.flip__face {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.flip__face--back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+}
+
+/* 品牌区（头像居中） */
+.brand {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  text-align: center;
+  gap: var(--s2);
+  margin-bottom: var(--s6);
 }
-.login__title {
-  margin: 0;
-  font-size: 20px;
+.brand--compact {
+  margin-bottom: var(--s5);
+}
+.brand__name {
+  font-size: var(--fs-lg);
   font-weight: 600;
   letter-spacing: var(--ls-label);
 }
-.login__subtitle {
-  margin: 0;
+.brand__sub {
   font-size: var(--fs-xs);
   color: var(--t3);
   letter-spacing: var(--ls-label);
 }
 
-.login__sep {
-  height: 1px;
-  margin: var(--s5) 0;
-  background: var(--line);
-}
-
-.field {
-  margin-bottom: var(--s4);
-}
-.field .label-cap {
-  display: block;
-  margin-bottom: 6px;
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
 }
 
 .captcha {
   display: flex;
-  align-items: stretch;
   gap: var(--s2);
 }
 .captcha :deep(.ui-input) {
@@ -303,7 +321,7 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 108px;
+  width: 100px;
   height: 40px;
   padding: 0;
   overflow: hidden;
@@ -324,16 +342,11 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
   object-fit: cover;
 }
 
-.login__row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 2px 0 var(--s5);
-}
 .remember {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  margin-top: 2px;
   font-size: var(--fs-md);
   color: var(--t2);
   cursor: pointer;
@@ -344,8 +357,16 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
   accent-color: var(--accent);
 }
 
-.login__error {
-  margin-top: var(--s4);
+.actions {
+  display: flex;
+  gap: var(--s2);
+}
+.actions :deep(.ui-btn) {
+  flex: 1;
+}
+
+.error {
+  margin-top: var(--s3);
   padding: var(--s2) var(--s3);
   border-left: 3px solid var(--danger);
   background: var(--danger-weak);
@@ -354,12 +375,12 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
   line-height: 1.5;
 }
 
-.login__links {
+.links {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--s3);
-  margin-top: var(--s4);
+  margin-top: var(--s5);
 }
 .links__sep {
   width: 1px;
@@ -379,29 +400,10 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
   text-decoration: underline;
 }
 
-.login__server {
-  margin-top: var(--s4);
-  padding-top: var(--s4);
-  border-top: 1px solid var(--line);
-}
-.server__actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s2);
-}
-.hint {
-  font-size: var(--fs-xs);
-  color: var(--t3);
-}
-
 .login__foot {
   flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--s3);
   padding: var(--s4);
+  text-align: center;
   font-size: var(--fs-xs);
   color: var(--t3);
 }

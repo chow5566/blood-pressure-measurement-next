@@ -128,6 +128,7 @@ import { useUserStore } from '@r/stores/user'
 import { useThemeStore, type ThemeMode } from '@r/stores/theme'
 import { useUpdateStore } from '@r/stores/update'
 import { authApi } from '@r/api/auth'
+import { windowApi } from '@r/api/window'
 import { confirmBox } from '@r/utils/confirm'
 import { configureHotkeys, installHotkeys, setPageScope } from '@r/hotkeys/manager'
 import type { HotkeyScope } from '@shared/domain/hotkeys'
@@ -142,6 +143,11 @@ const updateStore = useUpdateStore()
 const route = useRoute()
 const router = useRouter()
 const entered = ref(false)
+
+// 登录态切换窗口模式：登录小窗 ↔ 主应用大窗
+watch(entered, (value) => {
+  void windowApi.setMode(value ? 'main' : 'login')
+})
 
 type MenuId = 'user'
 const openMenu = ref<MenuId | null>(null)

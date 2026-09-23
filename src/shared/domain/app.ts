@@ -1,5 +1,8 @@
 /** 应用运行时配置、登录、驱动、更新相关类型 */
 
+/** 窗口模式：登录（小窗、锁定尺寸） / 主应用（大窗、可缩放） */
+export type WindowMode = 'login' | 'main'
+
 /** 采集快捷键（key 使用 KeyboardEvent.code，如 F3 / KeyS） */
 export interface PhotoHotkey {
   key: string

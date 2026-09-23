@@ -41,7 +41,8 @@ import type {
   LoginResult,
   RuntimeConfig,
   RuntimeConfigPatch,
-  UpdateStatus
+  UpdateStatus,
+  WindowMode
 } from './domain/app'
 
 /** 应用与环境信息 */
@@ -174,6 +175,8 @@ export interface IpcContract {
   'window:close': () => void
   /** 当前是否最大化 */
   'window:is-maximized': () => boolean
+  /** 切换窗口模式（登录小窗 / 主应用大窗） */
+  'window:set-mode': (mode: WindowMode) => void
 }
 
 /** 主 → 渲染 的推送事件契约 */
@@ -243,7 +246,8 @@ export const INVOKE_CHANNELS = [
   'window:minimize',
   'window:toggle-maximize',
   'window:close',
-  'window:is-maximized'
+  'window:is-maximized',
+  'window:set-mode'
 ] as const satisfies readonly (keyof IpcContract)[]
 
 /** 所有事件通道名（运行时白名单） */
