@@ -6,9 +6,9 @@
         <small>{{ displayPorts.length }} 台设备</small>
       </div>
       <div class="bp-measure__bar-actions">
-        <span class="app-hint">血压计用户 A = 左侧，用户 B = 右侧</span>
-        <UiButton v-if="isDev" variant="ghost" size="sm" @click="demo = !demo">
-          {{ demo ? '关闭演示' : '模拟设备' }}
+        <span v-if="displayPorts.length" class="app-hint">血压计用户 A = 左侧，用户 B = 右侧</span>
+        <UiButton v-if="isDev && demo" variant="ghost" size="sm" @click="demo = false">
+          关闭演示
         </UiButton>
         <UiButton
           v-if="displayPorts.length && !demo"
@@ -33,9 +33,12 @@
 
     <div v-else class="bp-empty">
       <LinkLoadingView />
-      <UiButton variant="primary" :loading="loading" @click="reload(false)">
-        手动识别血压计
-      </UiButton>
+      <div class="bp-empty__ops">
+        <UiButton variant="primary" :loading="loading" @click="reload(false)">
+          手动识别血压计
+        </UiButton>
+        <UiButton v-if="isDev" variant="secondary" @click="demo = true">模拟设备</UiButton>
+      </div>
     </div>
   </div>
 </template>
@@ -166,6 +169,11 @@ onBeforeUnmount(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--s5);
+  gap: var(--s4);
+}
+.bp-empty__ops {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
 }
 </style>

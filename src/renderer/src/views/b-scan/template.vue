@@ -461,7 +461,7 @@ useHotkey('templateRefresh', () => void handleSync(), 'bscan-template')
   gap: var(--s2);
   padding: var(--s3) var(--s4);
   border-top: 1px solid var(--line);
-  background: var(--surface-2);
+  background: var(--foot-bg);
 }
 
 .tpl-detail {

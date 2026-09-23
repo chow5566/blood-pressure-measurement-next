@@ -1,6 +1,6 @@
 <template>
-  <div class="bp-empty">
-    <span class="bp-empty__icon">
+  <div class="link-loading">
+    <span class="link-loading__icon">
       <!-- 内联 USB 图标，避免额外图标系统依赖 -->
       <svg viewBox="0 0 1024 1024" width="26" height="26" fill="currentColor">
         <path
@@ -8,8 +8,8 @@
         />
       </svg>
     </span>
-    <div class="bp-empty__title">未检测到血压计</div>
-    <div class="bp-empty__hint">请确认设备已连接，或点击下方「手动识别血压计」</div>
+    <div class="link-loading__title">未检测到血压计</div>
+    <div class="link-loading__hint">请确认设备已连接，或点击下方「手动识别血压计」</div>
   </div>
 </template>
 
@@ -18,14 +18,14 @@
 </script>
 
 <style scoped>
-.bp-empty {
+.link-loading {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--s2);
-  padding: var(--s6);
+  padding: var(--s6) var(--s6) var(--s2);
 }
-.bp-empty__icon {
+.link-loading__icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -36,12 +36,12 @@
   background: var(--surface-2);
   color: var(--t3);
 }
-.bp-empty__title {
+.link-loading__title {
   font-size: var(--fs-lg);
   font-weight: 600;
   color: var(--t1);
 }
-.bp-empty__hint {
+.link-loading__hint {
   font-size: var(--fs-md);
   color: var(--t3);
 }

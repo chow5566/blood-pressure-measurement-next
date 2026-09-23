@@ -414,7 +414,7 @@ onUnmounted(() => {
   gap: var(--s2);
   padding: var(--s3) var(--s4);
   border-top: 1px solid var(--line);
-  background: var(--surface-2);
+  background: var(--foot-bg);
 }
 .node {
   padding: var(--s2) var(--s3);
