@@ -41,9 +41,10 @@ function cancel(): void {
 .confirm {
   width: 400px;
   padding: 24px;
+  border: 1px solid var(--line-strong);
   border-radius: var(--r-lg);
   background: var(--surface);
-  box-shadow: var(--sh-2);
+  box-shadow: none;
 }
 .confirm__title {
   font-size: 16px;

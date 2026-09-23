@@ -3,13 +3,13 @@
  * 零圆角、发丝线、严格对齐；仅浮层使用阴影。
  */
 
-/* ── 面板（冷灰底上的白卡 + 轻阴影） ─────────────── */
+/* ── 面板（白底页面上的浅灰区块） ─────────────── */
 .app-card,
 .panel {
-  background: var(--surface);
+  background: var(--panel-bg);
   border: 1px solid var(--line);
   border-radius: 0;
-  box-shadow: var(--sh-1);
+  box-shadow: none;
 }
 
 .panel__head {

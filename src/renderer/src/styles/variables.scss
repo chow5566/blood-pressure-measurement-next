@@ -33,15 +33,16 @@
   --danger-soft: var(--danger-weak);
   --data-soft: #e0f2f2;
 
-  /* ── 中性阶（中性灰，参考现代编辑器浅色） ────── */
+  /* ── 中性阶（浅中性灰页面 + 白卡） ─────────────── */
   --bg: #f4f4f5;
   --surface: #ffffff;
-  --surface-2: #f7f7f8;
+  --panel-bg: #ffffff;
+  --surface-2: #f6f6f7;
   --surface-3: #ebebed;
-  --line: #e7e7e9;
-  --line-strong: #d7d7da;
+  --line: #e8e8ea;
+  --line-strong: #d9d9dc;
   --t1: #1f2328;
-  --t2: #565b63;
+  --t2: #5c6166;
   --t3: #8a9096;
   --disabled: #a8adb4;
 
@@ -208,6 +209,7 @@ html.dark {
 
   --bg: #161616;
   --surface: #262626;
+  --panel-bg: #262626;
   --surface-2: #1c1c1c;
   --surface-3: #333333;
   --line: #393939;
