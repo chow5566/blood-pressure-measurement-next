@@ -120,13 +120,13 @@
         <section class="panel">
           <header class="panel__head">
             <div class="panel__title">设备驱动</div>
-            <span class="panel__meta">请自行安装</span>
+            <span class="panel__meta">{{ osBitness }}</span>
           </header>
           <div class="panel__body">
             <p class="driver-tip">
-              <strong>温馨提示：</strong>采集卡（如 VGA2USB
-              等）驱动种类繁多，本应用<strong>不再负责驱动的安装与维护</strong>。请您根据实际使用的采集卡型号，自行安装对应驱动。
-              本应用仅通过转接头 / VGA 采集卡读取视频流，无需在应用内安装驱动。
+              本应用<strong>不再负责驱动安装</strong>。请按采集卡型号自行安装驱动，并注意区分
+              <strong>64 位 / 32 位</strong>（按系统位数选择）。本应用仅通过转接头 / VGA
+              采集卡读取视频流。
             </p>
           </div>
         </section>
@@ -340,6 +340,15 @@ import type { HotkeyConfig, PhotoHotkey } from '@shared/domain/app'
 const config = useConfigStore()
 const theme = useThemeStore()
 
+/** 系统位数（用于驱动提示） */
+const arch = ref('')
+const osBitness = computed(() => {
+  const value = arch.value.toLowerCase()
+  if (value === 'x64' || value === 'arm64') return '64 位'
+  if (value === 'ia32' || value === 'x86') return '32 位'
+  return arch.value || '—'
+})
+
 type TabId = 'basic' | 'appearance' | 'device' | 'storage' | 'hotkey' | 'about'
 const activeTab = ref<TabId>('basic')
 const tabs: { id: TabId; label: string }[] = [
@@ -546,6 +555,12 @@ function openExternal(url: string): void {
 
 onMounted(() => {
   void updateStore.init()
+  void appApi
+    .info()
+    .then((info) => {
+      arch.value = info.arch
+    })
+    .catch(() => undefined)
 })
 </script>
 

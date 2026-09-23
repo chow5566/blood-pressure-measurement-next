@@ -36,7 +36,7 @@
 - preload 仅暴露白名单方法，不暴露 `ipcRenderer` 原始对象。
 - 所有 `ipcMain.handle` 入参做运行时校验（zod 或手写守卫）。
 - 禁用任意 URL 导航与新窗口（`setWindowOpenHandler` 拒绝）。
-- 现有 `requireAdministrator` 调整为**仅驱动安装时提权**（见 ADR-004）。
+- 应用以普通权限启动（不再需要驱动安装提权，见 ADR-004）。
 
 ## 3. 目录结构（建议）
 
@@ -138,12 +138,7 @@ interface VideoCaptureDevice {
   stop(): void
 }
 
-// 驱动安装器（按 OS 位数选择 x86/x64）
-interface DriverInstaller {
-  check(name: DriverName): Promise<boolean>
-  install(name: DriverName, osArch: 'x86' | 'x64'): Promise<void>
-  uninstall(name: DriverName): Promise<void>
-}
+// 注：应用不再负责任何驱动的安装/卸载（由用户按采集卡型号自行安装）。
 
 // 本地持久化
 interface LocalRepository<T> {

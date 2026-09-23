@@ -41,9 +41,6 @@
 | 通道 | 类型 | 说明 |
 | --- | --- | --- |
 | `bScan:preview:report` | handle | 入参 `BScanReportParams`，返回 docx dataURL |
-| `bScan:installDriver` | handle | 安装驱动 |
-| `bScan:uninstallDriver` | handle | 卸载驱动 |
-| `bScan:checkDriverInstalled` | handle | 检查驱动 |
 
 ### 1.5 更新
 
@@ -164,7 +161,7 @@ contextBridge.exposeInMainWorld('api', {
 | I2 | `port:init-bp-port` 每次都 `removeAllListeners` 且全局单例，多窗口会串 | 已解决：单窗口 + 按 `path` 过滤事件；主进程统一管理串口 |
 | I3 | `store:get:sync` 中未 return，`event.returnValue` 可能被覆盖 | 新实现不提供同步 store 通道 |
 | I4 | `pinia:stateChanged` 广播无节流 | 单窗口架构下不再需要跨窗口同步 |
-| I5 | 驱动安装在主进程同步 `exec`，无进度/超时 | 待 M5 处理 |
+| I5 | 驱动安装 | 已移除：应用不再负责驱动的安装/卸载（由用户自行安装） |
 
 ## 5. 已实现通道（M2 / M3）
 
