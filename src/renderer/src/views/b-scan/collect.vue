@@ -8,7 +8,7 @@
           <el-checkbox v-model="store.defaultCheckPic">采集后默认勾选</el-checkbox>
         </div>
         <div class="panel__body panel__body--tight">
-          <VideoView ref="videoRef" />
+          <VideoView ref="videoRef" :capture-enabled="captureReady" />
         </div>
       </section>
 
@@ -26,7 +26,13 @@
               ><el-icon :size="24"><Picture /></el-icon
             ></span>
             <span class="gallery__empty-title">暂无采集图片</span>
-            <span class="app-hint">在上方画面中点击「采集」，或按 {{ takePhotoLabel }} 快捷键</span>
+            <span class="app-hint">
+              {{
+                captureReady
+                  ? `在上方画面中点击「采集」，或按 ${takePhotoLabel} 快捷键`
+                  : '请先扫描或输入条码号，再进行采集'
+              }}
+            </span>
           </div>
           <div v-else class="gallery__grid">
             <PicView
@@ -87,7 +93,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onActivated, onMounted, ref, watch } from 'vue'
 import { Picture } from '@element-plus/icons-vue'
 import VideoView from '@r/components/video/VideoView.vue'
 import FormView from './FormView.vue'
@@ -113,9 +119,19 @@ const config = useConfigStore()
 /** 采集快捷键文案（跟随设置动态变化） */
 const takePhotoLabel = computed(() => comboText(config.hotkeys.takePhoto))
 
+/** 是否已确认条码（未确认前禁止采集，避免先拍后输条码导致照片被覆盖） */
+const captureReady = computed(() => store.barcodeConfirmed)
+
 const videoRef = ref<InstanceType<typeof VideoView>>()
 const formRef = ref<InstanceType<typeof FormView>>()
 const submitting = ref<'local' | 'upload' | null>(null)
+
+/** 进入采集页时聚焦条码输入框，便于扫码枪直接录入 */
+function focusBarcode(): void {
+  if (!captureReady.value) formRef.value?.letBarcodeInputFocus()
+}
+onMounted(focusBarcode)
+onActivated(focusBarcode)
 
 const showViewer = ref(false)
 const previewSrcList = ref<string[]>([])

@@ -66,7 +66,13 @@
         </div>
         <template v-else>
           <span class="video-view__hint">
-            {{ canCapture ? `点击画面采集 · 快捷键 ${takePhotoLabel}` : '设备未就绪' }}
+            {{
+              captureEnabled === false
+                ? '请先扫描或输入条码号'
+                : canCapture
+                  ? `点击画面采集 · 快捷键 ${takePhotoLabel}`
+                  : '设备未就绪'
+            }}
           </span>
         </template>
       </div>
@@ -93,9 +99,13 @@ import { uuid } from '@shared/utils/uuid'
  * - `autoStart`：非 keep-alive 场景（如弹框）在挂载时取流、卸载时释放。
  */
 
-const props = withDefaults(defineProps<{ pics?: TempPic[]; autoStart?: boolean }>(), {
-  autoStart: false
-})
+const props = withDefaults(
+  defineProps<{ pics?: TempPic[]; autoStart?: boolean; captureEnabled?: boolean }>(),
+  {
+    autoStart: false,
+    captureEnabled: true
+  }
+)
 const emit = defineEmits<{ capture: [pic: TempPic] }>()
 
 const store = useBScanStore()
@@ -208,6 +218,11 @@ async function init(): Promise<void> {
 
 /** 采集一帧 */
 function takePhoto(): string | null {
+  // 采集页要求先确认条码，避免先拍后输条码导致照片被覆盖
+  if (props.captureEnabled === false) {
+    ElMessage('请先扫描或输入条码号')
+    return null
+  }
   if (!canCapture.value) return null
   const video = videoRef.value
   if (!video || !video.videoWidth) return null

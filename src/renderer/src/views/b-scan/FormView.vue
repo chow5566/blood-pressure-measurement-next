@@ -9,6 +9,7 @@
               ref="barcodeInput"
               v-model="formData.barcode"
               placeholder="扫码或输入条码号"
+              @input="handleBarcodeInput"
               @keydown.enter="handleGetInfo"
               @blur="handleBarcodeBlur"
             />
@@ -405,6 +406,11 @@ function applyTemplate(type: 'APPEND' | 'REPLACE'): void {
 
 // ── 数据读取 ──────────────────────────────────────────
 /** 条码失焦：值变化时查询 */
+/** 输入条码时先锁定采集，待确认后再解锁 */
+function handleBarcodeInput(): void {
+  store.setBarcodeConfirmed(false)
+}
+
 function handleBarcodeBlur(): void {
   if (formData.barcode !== originalBarcode.value) {
     void handleGetInfo()
@@ -416,6 +422,11 @@ async function handleGetInfo(): Promise<void> {
   if (!formData.barcode) {
     resetForm()
     originalBarcode.value = ''
+    return
+  }
+  // 同一已确认条码且已有图片：避免重复回车清空已采集图片
+  if (formData.barcode === originalBarcode.value && store.tempPics.length > 0) {
+    store.setBarcodeConfirmed(true)
     return
   }
   store.pageLoading = true
@@ -443,6 +454,7 @@ async function handleGetInfo(): Promise<void> {
       store.tempPics = []
     }
     originalBarcode.value = formData.barcode
+    store.setBarcodeConfirmed(true)
 
     // 联网使用：拉取在线数据（失败静默，保留本地）
     if (store.isOnline && userStore.isOnline === 'Y') {
@@ -450,6 +462,7 @@ async function handleGetInfo(): Promise<void> {
     }
   } catch {
     store.tempPics = []
+    store.setBarcodeConfirmed(false)
   } finally {
     store.pageLoading = false
   }
@@ -487,6 +500,8 @@ function handleTypeChange(value: string | number | boolean | undefined): void {
 
 function resetForm(): void {
   formRef.value?.resetFields()
+  originalBarcode.value = ''
+  store.setBarcodeConfirmed(false)
 }
 
 async function handleIdCardBlur(): Promise<void> {

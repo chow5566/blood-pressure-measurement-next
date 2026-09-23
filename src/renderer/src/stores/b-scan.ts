@@ -44,11 +44,16 @@ export const useBScanStore = defineStore('bScan', {
     /** 视频滤镜 */
     videoFilter: { ...DEFAULT_FILTER },
     /** 采集后默认勾选 */
-    defaultCheckPic: true
+    defaultCheckPic: true,
+    /** 条码是否已确认（扫码/回车确认后方可采集） */
+    barcodeConfirmed: false
   }),
   actions: {
     addTempPic(pic: TempPic): void {
       this.tempPics.unshift(pic)
+    },
+    setBarcodeConfirmed(value: boolean): void {
+      this.barcodeConfirmed = value
     },
     removeTempPic(id: string): void {
       const index = this.tempPics.findIndex((item) => item.id === id)
