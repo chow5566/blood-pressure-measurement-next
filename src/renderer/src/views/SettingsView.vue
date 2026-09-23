@@ -26,18 +26,28 @@
                 <div class="srow__label">服务端地址</div>
                 <div class="srow__desc">后端接口地址，用于登录与数据上传</div>
               </div>
-              <button class="srow__value" type="button" @click="openEdit('baseApi')">
-                {{ config.baseApi || '未设置' }}
-              </button>
+              <div class="srow__ops">
+                <span class="srow__value-text" :title="config.baseApi">
+                  {{ config.baseApi || '未设置' }}
+                </span>
+                <UiButton variant="secondary" size="sm" @click="openEdit('baseApi')">
+                  修改
+                </UiButton>
+              </div>
             </div>
             <div class="srow">
               <div class="srow__main">
                 <div class="srow__label">静态资源地址</div>
                 <div class="srow__desc">用于加载服务器上的图片资源</div>
               </div>
-              <button class="srow__value" type="button" @click="openEdit('staticApi')">
-                {{ config.staticApi || '未设置' }}
-              </button>
+              <div class="srow__ops">
+                <span class="srow__value-text" :title="config.staticApi">
+                  {{ config.staticApi || '未设置' }}
+                </span>
+                <UiButton variant="secondary" size="sm" @click="openEdit('staticApi')">
+                  修改
+                </UiButton>
+              </div>
             </div>
           </div>
         </section>
@@ -68,9 +78,14 @@
                 <div class="srow__label">报告模板标题</div>
                 <div class="srow__desc">B超报告顶部标题（通常为机构名称）</div>
               </div>
-              <button class="srow__value" type="button" @click="openEdit('reportTitle')">
-                {{ config.reportTemplate.title || '未设置' }}
-              </button>
+              <div class="srow__ops">
+                <span class="srow__value-text" :title="config.reportTemplate.title">
+                  {{ config.reportTemplate.title || '未设置' }}
+                </span>
+                <UiButton variant="secondary" size="sm" @click="openEdit('reportTitle')">
+                  修改
+                </UiButton>
+              </div>
             </div>
           </div>
         </section>
@@ -727,24 +742,20 @@ onMounted(() => {
   line-height: 1.5;
   color: var(--t3);
 }
-.srow__value {
+.srow__ops {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
   flex-shrink: 0;
-  max-width: 380px;
-  padding: 4px 8px;
+}
+.srow__value-text {
+  max-width: 320px;
   overflow: hidden;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--t2);
+  color: var(--t3);
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
-  text-align: right;
   text-overflow: ellipsis;
   white-space: nowrap;
-  cursor: pointer;
-}
-.srow__value:hover {
-  border-color: var(--line-strong);
-  color: var(--t1);
 }
 .srow__select {
   width: 180px;
