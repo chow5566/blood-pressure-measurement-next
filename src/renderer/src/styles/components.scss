@@ -443,21 +443,19 @@
   border-color: var(--accent-control);
 }
 
-/* 遮罩层：半透明 + 背景模糊（毛玻璃） */
+/* 遮罩层：纯半透明
+ * 注意：不要使用 backdrop-filter（毛玻璃）——Win7 / 软件渲染下会导致
+ * 每次弹框开合严重卡顿（需逐帧重绘整个背景）。 */
 .el-overlay {
   background-color: rgba(0, 0, 0, 0.35);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
 }
 html.dark .el-overlay {
   background-color: rgba(0, 0, 0, 0.55);
 }
 
-/* 图片查看器遮罩：同样做背景模糊 */
+/* 图片查看器遮罩：同样使用纯半透明 */
 .el-image-viewer__mask {
   background-color: rgba(0, 0, 0, 0.45);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
 }
 html.dark .el-image-viewer__mask {
   background-color: rgba(0, 0, 0, 0.6);
