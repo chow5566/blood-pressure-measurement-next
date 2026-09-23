@@ -412,12 +412,14 @@ function handleBarcodeInput(): void {
 }
 
 function handleBarcodeBlur(): void {
+  if (!formData.barcode) return
   if (formData.barcode !== originalBarcode.value) {
     void handleGetInfo()
   }
 }
 
 /** 读取本地记录并填充表单；联网时合并在线数据 */
+let loadToken = 0
 async function handleGetInfo(): Promise<void> {
   if (!formData.barcode) {
     resetForm()
@@ -429,9 +431,12 @@ async function handleGetInfo(): Promise<void> {
     store.setBarcodeConfirmed(true)
     return
   }
+  const token = ++loadToken
   store.pageLoading = true
   try {
     const record = await bScanApi.get(formData.barcode)
+    // 已被重置/新查询作废：丢弃本次结果，避免把旧图片回填
+    if (token !== loadToken) return
     if (record) {
       formData.name = record.name ?? ''
       formData.idCard = record.idCard ?? ''
@@ -458,21 +463,23 @@ async function handleGetInfo(): Promise<void> {
 
     // 联网使用：拉取在线数据（失败静默，保留本地）
     if (store.isOnline && userStore.isOnline === 'Y') {
-      await mergeOnlineData()
+      await mergeOnlineData(token)
     }
   } catch {
-    store.tempPics = []
-    store.setBarcodeConfirmed(false)
+    if (token === loadToken) {
+      store.tempPics = []
+      store.setBarcodeConfirmed(false)
+    }
   } finally {
-    store.pageLoading = false
+    if (token === loadToken) store.pageLoading = false
   }
 }
 
 /** 合并在线数据（在线数据优先，本地备注保留） */
-async function mergeOnlineData(): Promise<void> {
+async function mergeOnlineData(token: number): Promise<void> {
   try {
     const online = await bScanApi.onlineLookup(formData.barcode, store.bScanType)
-    if (!online) return
+    if (token !== loadToken || !online) return
     formData.name = online.name ?? formData.name
     formData.idCard = online.idCard ?? formData.idCard
     formData.gender = online.gender ?? formData.gender
@@ -502,6 +509,8 @@ function resetForm(): void {
   formRef.value?.resetFields()
   originalBarcode.value = ''
   store.setBarcodeConfirmed(false)
+  // 作废进行中的查询，避免重置后旧结果把图片回填
+  loadToken++
 }
 
 async function handleIdCardBlur(): Promise<void> {
