@@ -5,7 +5,6 @@ import { registerBloodPressureIpc } from './modules/blood-pressure'
 import { registerBScanIpc } from './modules/b-scan'
 import { registerConfigIpc } from './modules/config'
 import { registerAuthIpc } from './modules/auth'
-import { registerDriverIpc } from './modules/driver'
 import { registerUpdateIpc } from './modules/update'
 import { registerWindowIpc } from './modules/window'
 
@@ -20,7 +19,6 @@ export function registerIpc(): void {
   registerBloodPressureIpc()
   registerBScanIpc()
   registerAuthIpc()
-  registerDriverIpc()
   registerUpdateIpc()
   registerWindowIpc()
   logger.info('[ipc] handlers registered')

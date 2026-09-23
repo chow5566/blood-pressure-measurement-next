@@ -120,45 +120,14 @@
         <section class="panel">
           <header class="panel__head">
             <div class="panel__title">设备驱动</div>
-            <span class="panel__meta">{{ driver?.osArch || '检测中' }}</span>
+            <span class="panel__meta">需自行安装</span>
           </header>
           <div class="panel__body">
-            <div class="row row--inline">
-              <div class="row__field">
-                <span class="app-tag" :class="driver?.installed ? 'app-tag--ok' : 'app-tag--warn'">
-                  {{ driver?.installed ? '已安装' : '未安装' }}
-                </span>
-                <span class="row__meta">VGA2USB 采集卡驱动</span>
-              </div>
-              <div class="row__ops">
-                <UiButton
-                  variant="secondary"
-                  size="sm"
-                  :loading="driverLoading"
-                  @click="refreshDriver"
-                >
-                  刷新
-                </UiButton>
-                <UiButton
-                  v-if="!driver?.installed"
-                  variant="primary"
-                  size="sm"
-                  :loading="driverLoading"
-                  @click="installDriver"
-                >
-                  安装
-                </UiButton>
-                <UiButton
-                  v-else
-                  variant="danger"
-                  size="sm"
-                  :loading="driverLoading"
-                  @click="uninstallDriver"
-                >
-                  卸载
-                </UiButton>
-              </div>
-            </div>
+            <p class="driver-tip">
+              本应用<strong>不负责安装或维护采集卡驱动</strong>。采集卡（如 VGA2USB
+              等）驱动种类繁多，请根据你实际使用的采集卡型号，自行安装对应的驱动。
+              本应用仅通过转接头 / VGA 采集卡读取视频流，无需在应用内安装驱动。
+            </p>
           </div>
         </section>
 
@@ -360,13 +329,12 @@ import type { IconName } from '@r/components/ui/icons'
 import { useConfigStore } from '@r/stores/config'
 import { useThemeStore, type ThemeMode } from '@r/stores/theme'
 import { useUpdateStore } from '@r/stores/update'
-import { driverApi } from '@r/api/driver'
 import { appApi } from '@r/api/app'
 import { toast } from '@r/utils/toast'
 import { confirmBox } from '@r/utils/confirm'
 import { comboText } from '@r/utils/hotkey'
 import { groupedHotkeyDefs, HOTKEY_DEFS, type HotkeyDef } from '@shared/domain/hotkeys'
-import type { DriverStatus, HotkeyConfig, PhotoHotkey } from '@shared/domain/app'
+import type { HotkeyConfig, PhotoHotkey } from '@shared/domain/app'
 
 /** 设置页：基础配置 / 外观 / 设备与更新 / 快捷键（分类 Tab） */
 const config = useConfigStore()
@@ -537,10 +505,7 @@ async function restoreAllHotkeys(): Promise<void> {
   toast('已恢复全部默认快捷键', 'success')
 }
 
-// ── 驱动 / 更新 ───────────────────────────────────────
-const driver = ref<DriverStatus | null>(null)
-const driverLoading = ref(false)
-
+// ── 更新 ──────────────────────────────────────────────
 const updateStore = useUpdateStore()
 const isDownloading = computed(() => updateStore.status.state === 'downloading')
 
@@ -575,47 +540,11 @@ function openUpdateCenter(): void {
   updateStore.open()
 }
 
-async function refreshDriver(): Promise<void> {
-  driverLoading.value = true
-  try {
-    driver.value = await driverApi.status('VGA2USB')
-  } finally {
-    driverLoading.value = false
-  }
-}
-
-async function installDriver(): Promise<void> {
-  driverLoading.value = true
-  try {
-    driver.value = await driverApi.install('VGA2USB')
-    toast('驱动安装完成', 'success')
-  } catch (error) {
-    toast((error as Error).message, 'error')
-  } finally {
-    driverLoading.value = false
-  }
-}
-
-async function uninstallDriver(): Promise<void> {
-  const ok = await confirmBox('确认卸载 VGA2USB 驱动？', { danger: true })
-  if (!ok) return
-  driverLoading.value = true
-  try {
-    driver.value = await driverApi.uninstall('VGA2USB')
-    toast('驱动已卸载', 'success')
-  } catch (error) {
-    toast((error as Error).message, 'error')
-  } finally {
-    driverLoading.value = false
-  }
-}
-
 function openExternal(url: string): void {
   void appApi.openExternal(url)
 }
 
 onMounted(() => {
-  void refreshDriver()
   void updateStore.init()
 })
 </script>
@@ -696,6 +625,18 @@ onMounted(() => {
   padding: var(--s3) var(--s4);
   border-top: 1px solid var(--line);
   background: var(--foot-bg);
+}
+
+/* 设备驱动说明 */
+.driver-tip {
+  max-width: 640px;
+  margin: 0;
+  font-size: var(--fs-md);
+  line-height: 1.9;
+  color: var(--t2);
+}
+.driver-tip strong {
+  color: var(--t1);
 }
 
 .select {

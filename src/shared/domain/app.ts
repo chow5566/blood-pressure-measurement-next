@@ -125,15 +125,6 @@ export interface AuthPopupInfo {
   managerExtendCount?: number
 }
 
-/** 驱动状态 */
-export interface DriverStatus {
-  /** 驱动名，如 VGA2USB */
-  name: string
-  installed: boolean
-  /** 当前系统位数 */
-  osArch: 'x86' | 'x64'
-}
-
 /** 更新状态 */
 export type UpdateState =
   | 'idle'

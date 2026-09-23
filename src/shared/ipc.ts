@@ -36,7 +36,6 @@ import type {
 import type { OperationResult, PageQuery, PageResult } from './domain/common'
 import type {
   AuthPopupInfo,
-  DriverStatus,
   LoginInput,
   LoginResult,
   RuntimeConfig,
@@ -147,13 +146,6 @@ export interface IpcContract {
   /** 退出登录 */
   'auth:logout': () => void
 
-  /** 查询驱动状态 */
-  'driver:status': (name: string) => DriverStatus
-  /** 安装驱动 */
-  'driver:install': (name: string) => DriverStatus
-  /** 卸载驱动 */
-  'driver:uninstall': (name: string) => DriverStatus
-
   /** 检查更新 */
   'update:check': () => UpdateStatus
   /** 下载更新（若存在未完成下载则续传） */
@@ -234,9 +226,6 @@ export const INVOKE_CHANNELS = [
   'auth:captcha',
   'auth:auth-popup',
   'auth:logout',
-  'driver:status',
-  'driver:install',
-  'driver:uninstall',
   'update:check',
   'update:download',
   'update:pause',
