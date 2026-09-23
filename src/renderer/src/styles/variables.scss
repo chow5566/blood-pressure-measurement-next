@@ -12,14 +12,14 @@
   color-scheme: light;
 
   /* ── 强调（唯一交互色） ─────────────────────────── */
-  --accent: #00e676;
-  --accent-hover: #00c853;
-  --accent-active: #00994a;
-  --accent-weak: #e6fff1;
-  --accent-line: #8bf0b8;
-  --accent-ink: #007a3d; /* 浅底上的文字用色（保证对比度） */
-  --accent-control: #00874a; /* 控件选中态填充（深一档绿，白勾可读） */
-  --on-accent: #0a0a0a; /* 绿色填充上使用近黑文字 */
+  --accent: #1f883d;
+  --accent-hover: #1a7f37;
+  --accent-active: #145c28;
+  --accent-weak: #dafbe1;
+  --accent-line: #a8e0b6;
+  --accent-ink: #1a7f37; /* 浅底上的文字用色（保证对比度） */
+  --accent-control: #1a7f37; /* 控件选中态填充 */
+  --on-accent: #ffffff; /* 绿色填充上使用白色文字 */
 
   /* 兼容别名（历史组件引用） */
   --primary: var(--accent);
@@ -33,17 +33,17 @@
   --danger-soft: var(--danger-weak);
   --data-soft: #e0f2f2;
 
-  /* ── 中性阶（冷灰，带蓝调） ────────────────────── */
-  --bg: #f5f7fa;
+  /* ── 中性阶（中性灰，参考现代编辑器浅色） ────── */
+  --bg: #f4f4f5;
   --surface: #ffffff;
-  --surface-2: #f7f9fc;
-  --surface-3: #eef2f7;
-  --line: #e5e9f0;
-  --line-strong: #d3dae6;
-  --t1: #111827;
-  --t2: #4b5563;
-  --t3: #8b95a5;
-  --disabled: #a3adbd;
+  --surface-2: #f7f7f8;
+  --surface-3: #ebebed;
+  --line: #e7e7e9;
+  --line-strong: #d7d7da;
+  --t1: #1f2328;
+  --t2: #565b63;
+  --t3: #8a9096;
+  --disabled: #a8adb4;
 
   /* ── 语义 ─────────────────────────────────────── */
   --ok: #198038;
@@ -75,10 +75,10 @@
   --r-lg: 0px;
   --r-pill: 0px;
 
-  /* ── 阴影：仅浮层 ──────────────────────────────── */
-  --sh-1: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
-  --sh-2: 0 4px 12px rgba(16, 24, 40, 0.08), 0 2px 4px rgba(16, 24, 40, 0.05);
-  --sh-pop: 0 12px 32px rgba(16, 24, 40, 0.16);
+  /* ── 阴影：不使用（仅靠发丝线区分层次） ─────────── */
+  --sh-1: none;
+  --sh-2: none;
+  --sh-pop: none;
 
   /* ── 间距（8px 基准，另配 4px 微调） ───────────── */
   --s1: 4px;
@@ -151,13 +151,13 @@
   --app-font-number: var(--font-number);
 
   /* ── Element Plus 映射（零圆角、紧凑、发丝线） ── */
-  --el-color-primary: #00e676;
-  --el-color-primary-light-3: #00c853;
-  --el-color-primary-light-5: #4fe593;
-  --el-color-primary-light-7: #8bf0b8;
-  --el-color-primary-light-8: #c6f7dd;
-  --el-color-primary-light-9: #e6fff1;
-  --el-color-primary-dark-2: #00994a;
+  --el-color-primary: #1f883d;
+  --el-color-primary-light-3: #4aa863;
+  --el-color-primary-light-5: #7cc38f;
+  --el-color-primary-light-7: #a8e0b6;
+  --el-color-primary-light-8: #c6f0d0;
+  --el-color-primary-light-9: #dafbe1;
+  --el-color-primary-dark-2: #1a7f37;
   --el-color-success: #198038;
   --el-color-warning: #8a6a00;
   --el-color-danger: #da1e28;

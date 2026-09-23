@@ -488,12 +488,12 @@ async function autoCheckUpdate(): Promise<void> {
   color: var(--t1);
 }
 .item.is-active {
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--accent-weak);
+  color: var(--accent-ink);
   font-weight: 600;
 }
 .item.is-active .ui-icon {
-  color: var(--on-accent);
+  color: var(--accent-ink);
 }
 
 .content {
