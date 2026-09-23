@@ -1,66 +1,70 @@
 <template>
   <div class="login">
-    <div class="login__card no-drag">
-      <div class="login__head">
-        <UiLogo :size="22" />
-        <div class="login__titles">
-          <span class="login__name">血压及B超检测</span>
-          <span class="label-cap">社区体检工作站</span>
-        </div>
+    <!-- 顶部拖拽栏 + 窗口控件（无边框窗口） -->
+    <header class="login__bar">
+      <div class="no-drag">
+        <WindowControls />
       </div>
+    </header>
 
-      <div class="login__body">
-        <div class="field">
-          <label class="label-cap">账号</label>
-          <UiInput v-model="form.username" placeholder="请输入账号" @keydown.enter="handleLogin" />
+    <main class="login__center">
+      <div class="login__panel no-drag">
+        <div class="login__head">
+          <UiLogo :size="44" />
+          <h1 class="login__title">血压及B超检测</h1>
+          <p class="login__subtitle">社区体检工作站</p>
         </div>
 
-        <div class="field">
-          <label class="label-cap">密码</label>
-          <UiInput
-            v-model="form.password"
-            type="password"
-            placeholder="请输入密码"
-            @keydown.enter="handleLogin"
-          />
-        </div>
+        <div class="login__sep"></div>
 
-        <div class="field">
-          <label class="label-cap">验证码</label>
-          <div class="captcha">
-            <UiInput
-              v-model="form.captcha"
-              placeholder="请输入验证码"
-              @keydown.enter="handleLogin"
-            />
-            <button
-              class="captcha__img"
-              type="button"
-              title="点击刷新验证码"
-              @click="refreshCaptcha"
-            >
-              <img v-if="captchaImg" :src="captchaImg" alt="验证码" />
-              <span v-else>{{ captchaLoading ? '加载中…' : '点击刷新' }}</span>
-            </button>
+        <form class="login__form" @submit.prevent="handleLogin">
+          <div class="field">
+            <label class="label-cap">账号</label>
+            <UiInput v-model="form.username" size="lg" placeholder="请输入账号" />
           </div>
-        </div>
 
-        <label class="remember">
-          <input v-model="form.rememberMe" type="checkbox" />
-          <span>记住账号</span>
-        </label>
+          <div class="field">
+            <label class="label-cap">密码</label>
+            <UiInput v-model="form.password" size="lg" type="password" placeholder="请输入密码" />
+          </div>
 
-        <UiButton variant="primary" size="lg" block :loading="loading" @click="handleLogin">
-          登录
-        </UiButton>
+          <div class="field">
+            <label class="label-cap">验证码</label>
+            <div class="captcha">
+              <UiInput v-model="form.captcha" size="lg" placeholder="请输入验证码" />
+              <button
+                class="captcha__img"
+                type="button"
+                title="点击刷新验证码"
+                @click="refreshCaptcha"
+              >
+                <img v-if="captchaImg" :src="captchaImg" alt="验证码" />
+                <span v-else>{{ captchaLoading ? '加载中…' : '点击刷新' }}</span>
+              </button>
+            </div>
+          </div>
 
-        <div class="links">
+          <div class="login__row">
+            <label class="remember">
+              <input v-model="form.rememberMe" type="checkbox" />
+              <span>记住账号</span>
+            </label>
+          </div>
+
+          <UiButton variant="primary" size="lg" block :loading="loading" native-type="submit">
+            登录
+          </UiButton>
+        </form>
+
+        <div v-if="error" class="login__error">{{ error }}</div>
+
+        <div class="login__links">
           <button class="link" type="button" @click="handleOffline">离线使用</button>
           <span class="links__sep"></span>
           <button class="link" type="button" @click="showServer = !showServer">服务器设置</button>
         </div>
 
-        <div v-if="showServer" class="server">
+        <div v-if="showServer" class="login__server">
           <div class="field">
             <label class="label-cap">接口地址</label>
             <UiInput v-model="serverForm.baseApi" placeholder="http://…/health-display-local/" />
@@ -74,15 +78,14 @@
             <UiButton variant="secondary" size="sm" @click="saveServer">保存</UiButton>
           </div>
         </div>
-
-        <div v-if="error" class="error">{{ error }}</div>
       </div>
+    </main>
 
-      <div class="login__foot">
-        <span class="label-cap">v{{ config.version }}</span>
-        <span class="label-cap">离线可使用本地功能</span>
-      </div>
-    </div>
+    <footer class="login__foot">
+      <span>v{{ config.version }}</span>
+      <span class="links__sep"></span>
+      <span>离线可使用本地功能</span>
+    </footer>
   </div>
 </template>
 
@@ -91,6 +94,7 @@ import { onMounted, reactive, ref } from 'vue'
 import UiLogo from '@r/components/ui/UiLogo.vue'
 import UiInput from '@r/components/ui/UiInput.vue'
 import UiButton from '@r/components/ui/UiButton.vue'
+import WindowControls from '@r/components/WindowControls.vue'
 import { authApi } from '@r/api/auth'
 import { useConfigStore } from '@r/stores/config'
 import { useUserStore } from '@r/stores/user'
@@ -218,40 +222,63 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
 <style scoped>
 .login {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   height: 100%;
   background: var(--bg);
   -webkit-app-region: drag;
 }
 
-.login__card {
-  width: 360px;
+/* 顶部拖拽栏：仅放窗口控件 */
+.login__bar {
+  flex: 0 0 40px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 2px;
+}
+.login__bar .no-drag {
+  height: 100%;
+}
+
+.login__center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s5);
+}
+
+.login__panel {
+  width: 384px;
+  padding: var(--s7) var(--s6) var(--s5);
   background: var(--surface);
   border: 1px solid var(--line-strong);
-  -webkit-app-region: no-drag;
 }
 
 .login__head {
   display: flex;
-  align-items: center;
-  gap: var(--s3);
-  padding: var(--s5) var(--s5) var(--s4);
-  border-bottom: 1px solid var(--line);
-}
-.login__titles {
-  display: flex;
   flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
 }
-.login__name {
-  font-size: var(--fs-lg);
+.login__title {
+  margin: 0;
+  font-size: 20px;
   font-weight: 600;
   letter-spacing: var(--ls-label);
 }
+.login__subtitle {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--t3);
+  letter-spacing: var(--ls-label);
+}
 
-.login__body {
-  padding: var(--s5);
+.login__sep {
+  height: 1px;
+  margin: var(--s5) 0;
+  background: var(--line);
 }
 
 .field {
@@ -276,16 +303,16 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 104px;
-  height: var(--ctrl-h);
+  width: 108px;
+  height: 40px;
   padding: 0;
+  overflow: hidden;
   border: 1px solid var(--line-strong);
   background: var(--surface-2);
   color: var(--t3);
   font-family: inherit;
   font-size: var(--fs-xs);
   cursor: pointer;
-  overflow: hidden;
 }
 .captcha__img:hover {
   border-color: var(--accent);
@@ -297,11 +324,16 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
   object-fit: cover;
 }
 
+.login__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 2px 0 var(--s5);
+}
 .remember {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin: 2px 0 var(--s4);
   font-size: var(--fs-md);
   color: var(--t2);
   cursor: pointer;
@@ -312,12 +344,22 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
   accent-color: var(--accent);
 }
 
-.links {
+.login__error {
+  margin-top: var(--s4);
+  padding: var(--s2) var(--s3);
+  border-left: 3px solid var(--danger);
+  background: var(--danger-weak);
+  color: var(--danger);
+  font-size: var(--fs-md);
+  line-height: 1.5;
+}
+
+.login__links {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--s3);
-  margin-top: var(--s3);
+  margin-top: var(--s4);
 }
 .links__sep {
   width: 1px;
@@ -325,9 +367,9 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
   background: var(--line-strong);
 }
 .link {
+  padding: 0;
   border: none;
   background: transparent;
-  padding: 0;
   color: var(--accent-ink);
   font-family: inherit;
   font-size: var(--fs-md);
@@ -337,7 +379,7 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
   text-decoration: underline;
 }
 
-.server {
+.login__server {
   margin-top: var(--s4);
   padding-top: var(--s4);
   border-top: 1px solid var(--line);
@@ -353,22 +395,14 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
   color: var(--t3);
 }
 
-.error {
-  margin-top: var(--s4);
-  padding: var(--s2) var(--s3);
-  border-left: 3px solid var(--danger);
-  background: var(--danger-weak);
-  color: var(--danger);
-  font-size: var(--fs-md);
-  line-height: 1.5;
-}
-
 .login__foot {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: var(--s2) var(--s5);
-  border-top: 1px solid var(--line);
-  background: var(--surface-2);
+  justify-content: center;
+  gap: var(--s3);
+  padding: var(--s4);
+  font-size: var(--fs-xs);
+  color: var(--t3);
 }
 </style>
