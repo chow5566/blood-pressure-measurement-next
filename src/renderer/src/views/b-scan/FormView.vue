@@ -554,7 +554,8 @@ defineExpose({
 .fgrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--s3) var(--s4);
+  /* 行距留出校验提示（绝对定位）的空间，避免与下一行 label 相挤 */
+  gap: 22px var(--s4);
 }
 .fgrid__full {
   grid-column: 1 / -1;
@@ -564,7 +565,8 @@ defineExpose({
   margin-bottom: 0;
 }
 .bscan-form :deep(.el-form-item__label) {
-  padding-bottom: 4px;
+  margin-bottom: 4px;
+  padding-bottom: 0;
   line-height: 1.4;
   color: var(--t2);
 }
