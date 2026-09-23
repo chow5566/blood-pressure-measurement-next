@@ -69,6 +69,12 @@
         </div>
       </div>
 
+      <!-- 自动重试提示 -->
+      <div v-if="status.retry" class="ud__retry">
+        <span class="ud__retry-dot"></span>
+        <span>{{ retryText }}</span>
+      </div>
+
       <!-- 错误 -->
       <div v-if="status.state === 'error' && status.message" class="ud__error">
         <UiIcon name="close" :size="14" />
@@ -107,6 +113,7 @@
               :variant="action.variant"
               :size="'md'"
               :loading="action.loading"
+              :disabled="store.busy"
               @click="action.onClick"
             >
               {{ action.label }}
@@ -146,9 +153,11 @@ const subtitle = computed(() => {
     case 'available':
       return '发现可用更新，建议尽快升级'
     case 'downloading':
-      return '正在下载更新包'
+      return status.value.retry ? '网络不稳定，正在自动重试…' : '正在下载更新包'
     case 'paused':
       return '下载已暂停，可随时继续（支持断点续传）'
+    case 'finalizing':
+      return '正在校验安装包并准备安装…'
     case 'downloaded':
       return '更新包已就绪，重启后完成安装'
     case 'not-available':
@@ -191,7 +200,7 @@ const releaseDateText = computed(() => {
 })
 
 const showProgress = computed(() =>
-  ['downloading', 'paused', 'downloaded'].includes(status.value.state)
+  ['downloading', 'paused', 'finalizing', 'downloaded'].includes(status.value.state)
 )
 
 const resumableTag = computed(() => {
@@ -203,14 +212,23 @@ const resumableTag = computed(() => {
 const progressStateText = computed(() => {
   switch (status.value.state) {
     case 'downloading':
-      return '下载中'
+      return status.value.retry ? '自动重试中' : '下载中'
     case 'paused':
       return '已暂停'
+    case 'finalizing':
+      return '校验中'
     case 'downloaded':
       return '下载完成'
     default:
       return ''
   }
+})
+
+const retryText = computed(() => {
+  const retry = status.value.retry
+  if (!retry) return ''
+  if (retry.offline) return '网络不可用，正在等待网络恢复…'
+  return `网络中断，${retry.delaySeconds} 秒后自动重试（第 ${retry.attempt}/${retry.maxAttempts} 次）`
 })
 
 function formatDuration(seconds: number): string {
@@ -273,7 +291,7 @@ const actions = computed<DialogAction[]>(() => {
     case 'downloading':
       list.push({
         key: 'background',
-        label: '后台下载',
+        label: '收起（后台继续）',
         variant: 'ghost',
         onClick: () => store.close()
       })
@@ -282,6 +300,15 @@ const actions = computed<DialogAction[]>(() => {
         label: '暂停',
         variant: 'secondary',
         onClick: () => void store.pause()
+      })
+      break
+    case 'finalizing':
+      list.push({
+        key: 'finalizing',
+        label: '正在准备安装…',
+        variant: 'secondary',
+        loading: true,
+        onClick: () => undefined
       })
       break
     case 'paused':
@@ -468,6 +495,33 @@ const actions = computed<DialogAction[]>(() => {
   font-size: var(--fs-xs);
   color: var(--t3);
   font-family: var(--font-mono);
+}
+
+/* 自动重试 */
+.ud__retry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: var(--s2) var(--s3);
+  background: var(--warn-weak);
+  color: var(--warn);
+  border: 1px solid var(--warn);
+  font-size: var(--fs-sm);
+}
+.ud__retry-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--warn);
+  animation: ud-pulse 1s ease-in-out infinite;
+}
+@keyframes ud-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
 }
 
 /* 错误 */

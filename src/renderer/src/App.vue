@@ -60,6 +60,16 @@
             </div>
           </div>
 
+          <button
+            v-if="updateStore.hasUpdate"
+            class="update-chip"
+            :class="{ 'is-active': updateStore.status.state === 'downloading' }"
+            @click="updateStore.open()"
+          >
+            <span class="update-chip__dot"></span>
+            <span>{{ updateChipText }}</span>
+          </button>
+
           <WindowControls />
         </div>
       </header>
@@ -171,6 +181,27 @@ const themeOptions: { id: ThemeMode; label: string; icon: IconName }[] = [
 
 const currentTitle = computed(() => (route.meta.title as string) || '血压及B超检测')
 const currentSub = computed(() => (route.meta.subtitle as string) || '')
+
+/** 顶栏更新指示文案 */
+const updateChipText = computed(() => {
+  const update = updateStore.status
+  switch (update.state) {
+    case 'available':
+      return '有新版本'
+    case 'downloading':
+      return update.retry
+        ? `重试中 ${Math.round(update.percent ?? 0)}%`
+        : `更新 ${Math.round(update.percent ?? 0)}%`
+    case 'paused':
+      return `更新已暂停 ${Math.round(update.percent ?? 0)}%`
+    case 'finalizing':
+      return '准备安装…'
+    case 'downloaded':
+      return '待安装'
+    default:
+      return '更新'
+  }
+})
 
 /** 路由名 → 快捷键作用域 */
 const SCOPE_BY_ROUTE: Record<string, HotkeyScope> = {
@@ -306,6 +337,40 @@ async function autoCheckUpdate(): Promise<void> {
   font-size: var(--fs-xs);
   color: var(--t2);
   letter-spacing: var(--ls-label);
+}
+
+.update-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--accent-line);
+  background: var(--accent-weak);
+  color: var(--accent-ink);
+  font-family: inherit;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+.update-chip:hover {
+  border-color: var(--accent);
+}
+.update-chip__dot {
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+}
+.update-chip.is-active .update-chip__dot {
+  animation: update-pulse 1s ease-in-out infinite;
+}
+@keyframes update-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
 }
 
 .udrop {

@@ -130,9 +130,24 @@ export type UpdateState =
   | 'not-available'
   | 'downloading'
   | 'paused'
+  | 'finalizing'
   | 'downloaded'
   | 'cancelled'
   | 'error'
+
+/** 网络重试信息（下载中网络中断/离线时） */
+export interface UpdateRetryInfo {
+  /** 当前第几次尝试 */
+  attempt: number
+  /** 最大尝试次数 */
+  maxAttempts: number
+  /** 距下次重试的秒数 */
+  delaySeconds: number
+  /** 是否处于离线等待 */
+  offline: boolean
+  /** 触发原因（如“连接超时”“HTTP 502”） */
+  reason?: string
+}
 
 /** 更新状态快照（主进程 → 渲染） */
 export interface UpdateStatus {
@@ -159,6 +174,8 @@ export interface UpdateStatus {
   percent?: number
   /** 是否存在可续传的未完成下载（已下载一部分，可继续） */
   resumable?: boolean
+  /** 网络重试信息（存在表示正在自动重试） */
+  retry?: UpdateRetryInfo
   /** 检查/下载失败的错误信息 */
   message?: string
 }

@@ -450,9 +450,13 @@ const updateSummary = computed(() => {
     case 'available':
       return `发现新版本 v${status.version}`
     case 'downloading':
-      return `正在下载更新… ${Math.round(status.percent ?? 0)}%`
+      return status.retry
+        ? `网络不稳定，正在重试… ${Math.round(status.percent ?? 0)}%`
+        : `正在下载更新… ${Math.round(status.percent ?? 0)}%`
     case 'paused':
       return `更新下载已暂停 ${Math.round(status.percent ?? 0)}%（可续传）`
+    case 'finalizing':
+      return '正在校验并准备安装…'
     case 'downloaded':
       return `v${status.version} 已下载，重启后安装`
     case 'not-available':

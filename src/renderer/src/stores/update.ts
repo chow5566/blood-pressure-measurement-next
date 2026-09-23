@@ -21,15 +21,19 @@ export const useUpdateStore = defineStore('update', {
     status: { state: 'idle' } as UpdateStatus,
     visible: false,
     initialized: false,
+    /** 有变更操作（检查/下载/暂停/取消）进行中，期间忽略重复点击 */
+    busy: false,
     skipped: [] as string[]
   }),
   getters: {
     currentVersion: (state) => state.status.currentVersion || '',
     targetVersion: (state) => state.status.version || '',
     releaseNotes: (state) => state.status.releaseNotes || '',
-    /** 有可安装的新版本（待下载/已暂停/已下载） */
+    /** 有可安装的新版本（待下载/已暂停/校验中/已下载） */
     hasUpdate: (state) =>
-      ['available', 'downloading', 'paused', 'downloaded'].includes(state.status.state),
+      ['available', 'downloading', 'paused', 'finalizing', 'downloaded'].includes(
+        state.status.state
+      ),
     /** 判断某版本是否在忽略列表中 */
     isSkipped: (state) => (version?: string) => !!version && state.skipped.includes(version)
   },
@@ -66,19 +70,30 @@ export const useUpdateStore = defineStore('update', {
     close(): void {
       this.visible = false
     },
+    /** 串行化变更操作：进行中忽略新的点击，避免并发/竞态 */
+    async runAction(task: () => Promise<UpdateStatus>): Promise<void> {
+      if (this.busy) return
+      this.busy = true
+      try {
+        this.status = await task()
+      } finally {
+        this.busy = false
+      }
+    },
     async check(): Promise<void> {
-      this.status = await updateApi.check()
+      await this.runAction(() => updateApi.check())
     },
     async download(): Promise<void> {
-      this.status = await updateApi.download()
+      await this.runAction(() => updateApi.download())
     },
     async pause(): Promise<void> {
-      this.status = await updateApi.pause()
+      await this.runAction(() => updateApi.pause())
     },
     async cancel(): Promise<void> {
-      this.status = await updateApi.cancel()
+      await this.runAction(() => updateApi.cancel())
     },
     install(): void {
+      this.visible = false
       void updateApi.install()
     },
     /** 忽略某版本 */

@@ -94,6 +94,9 @@ publish:
   `src/renderer/src/components/UpdateDialog.vue`。
 - 下载落到 electron-updater 缓存（`%LOCALAPPDATA%\blood-pressure-measurement-updater\pending`），
   校验 sha512 后由 electron-updater 复用并触发「下载完成」。
+- **不稳定网络**：下载内置自动重试——网络中断/超时/HTTP 5xx/429/408 按指数退避重试并
+  **自动从断点续传**；离线时等待网络恢复（不计入重试次数）；长时间无数据判定卡死并重连；
+  校验失败自动清断点重下一次。所有变更命令串行执行，任一时刻只有一个下载写者。
 
 ### 3.3 安装时选择数据目录
 
