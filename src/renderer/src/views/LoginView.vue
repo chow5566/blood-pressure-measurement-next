@@ -19,37 +19,40 @@
                 <div class="brand__sub">社区体检工作站</div>
               </div>
 
-              <form class="form" novalidate @submit.prevent="handleLogin">
-                <div class="field">
-                  <UiInput
+              <el-form
+                ref="loginFormRef"
+                :model="form"
+                :rules="loginRules"
+                class="form"
+                hide-required-asterisk
+                @submit.prevent="handleLogin"
+              >
+                <el-form-item prop="username">
+                  <el-input
                     v-model="form.username"
-                    size="lg"
-                    icon="user"
-                    :invalid="!!errors.username"
+                    size="large"
+                    :prefix-icon="User"
                     placeholder="请输入账号"
                   />
-                  <div class="field-error">{{ errors.username }}</div>
-                </div>
+                </el-form-item>
 
-                <div class="field">
-                  <UiInput
+                <el-form-item prop="password">
+                  <el-input
                     v-model="form.password"
-                    size="lg"
-                    icon="lock"
+                    size="large"
                     type="password"
-                    :invalid="!!errors.password"
+                    show-password
+                    :prefix-icon="Lock"
                     placeholder="请输入密码"
                   />
-                  <div class="field-error">{{ errors.password }}</div>
-                </div>
+                </el-form-item>
 
-                <div class="field">
+                <el-form-item prop="captcha">
                   <div class="captcha">
-                    <UiInput
+                    <el-input
                       v-model="form.captcha"
-                      size="lg"
-                      icon="shield"
-                      :invalid="!!errors.captcha"
+                      size="large"
+                      :prefix-icon="Key"
                       placeholder="请输入验证码"
                     />
                     <button
@@ -62,8 +65,7 @@
                       <span v-else>{{ captchaLoading ? '加载中…' : '点击刷新' }}</span>
                     </button>
                   </div>
-                  <div class="field-error">{{ errors.captcha }}</div>
-                </div>
+                </el-form-item>
 
                 <label class="remember">
                   <input v-model="form.rememberMe" type="checkbox" />
@@ -75,7 +77,7 @@
                 </UiButton>
 
                 <div class="form-error">{{ error }}</div>
-              </form>
+              </el-form>
 
               <div class="links">
                 <button class="link" type="button" @click="handleOffline">离线使用</button>
@@ -91,26 +93,28 @@
                 <div class="brand__sub">配置后端接口与静态资源地址</div>
               </div>
 
-              <div class="form">
-                <div class="field">
-                  <UiInput
+              <el-form
+                ref="serverFormRef"
+                :model="serverForm"
+                :rules="serverRules"
+                class="form"
+                hide-required-asterisk
+              >
+                <el-form-item prop="baseApi">
+                  <el-input
                     v-model="serverForm.baseApi"
-                    size="lg"
-                    :invalid="!!serverErrors.baseApi"
+                    size="large"
                     placeholder="接口地址 http://…/health-display-local/"
                   />
-                  <div class="field-error">{{ serverErrors.baseApi }}</div>
-                </div>
+                </el-form-item>
 
-                <div class="field">
-                  <UiInput
+                <el-form-item prop="staticApi">
+                  <el-input
                     v-model="serverForm.staticApi"
-                    size="lg"
-                    :invalid="!!serverErrors.staticApi"
+                    size="large"
                     placeholder="静态资源地址 http://…/local-data-display/"
                   />
-                  <div class="field-error">{{ serverErrors.staticApi }}</div>
-                </div>
+                </el-form-item>
 
                 <div class="actions">
                   <UiButton variant="secondary" size="lg" @click="showServer = false">
@@ -118,7 +122,7 @@
                   </UiButton>
                   <UiButton variant="primary" size="lg" @click="saveServer">保存</UiButton>
                 </div>
-              </div>
+              </el-form>
             </div>
           </div>
         </div>
@@ -131,8 +135,9 @@
 
 <script setup lang="ts">
 import { onMounted, reactive, ref, watch } from 'vue'
+import { Key, Lock, User } from '@element-plus/icons-vue'
+import type { FormInstance, FormRules } from 'element-plus'
 import UiLogo from '@r/components/ui/UiLogo.vue'
-import UiInput from '@r/components/ui/UiInput.vue'
 import UiButton from '@r/components/ui/UiButton.vue'
 import WindowControls from '@r/components/WindowControls.vue'
 import { authApi } from '@r/api/auth'
@@ -142,7 +147,7 @@ import { toast } from '@r/utils/toast'
 import { uuid } from '@shared/utils/uuid'
 import type { LoginResult } from '@shared/domain/app'
 
-/** 登录页：账号登录 / 离线使用 / 服务地址设置（翻转卡片 + 字段内联校验） */
+/** 登录页：账号登录 / 离线使用 / 服务地址设置（翻转卡片 + el-form 校验） */
 const emit = defineEmits<{ enter: []; offline: [] }>()
 
 const config = useConfigStore()
@@ -151,7 +156,13 @@ const userStore = useUserStore()
 const loading = ref(false)
 const error = ref('')
 const form = reactive({ username: '', password: '', captcha: '', rememberMe: true })
-const errors = reactive({ username: '', password: '', captcha: '' })
+const loginFormRef = ref<FormInstance>()
+
+const loginRules: FormRules = {
+  username: [{ required: true, whitespace: true, message: '请输入账号', trigger: 'blur' }],
+  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
+  captcha: [{ required: true, whitespace: true, message: '请输入验证码', trigger: 'blur' }]
+}
 
 /* 图形验证码 */
 const captchaImg = ref('')
@@ -161,7 +172,7 @@ const captchaLoading = ref(false)
 async function refreshCaptcha(): Promise<void> {
   captchaUuid.value = uuid()
   form.captcha = ''
-  errors.captcha = ''
+  loginFormRef.value?.clearValidate('captcha')
   captchaLoading.value = true
   try {
     captchaImg.value = await authApi.captcha(captchaUuid.value)
@@ -176,7 +187,12 @@ async function refreshCaptcha(): Promise<void> {
 const showServer = ref(false)
 /** 服务器设置表单 + 校验（带出本地已保存地址） */
 const serverForm = reactive({ baseApi: config.baseApi, staticApi: config.staticApi })
-const serverErrors = reactive({ baseApi: '', staticApi: '' })
+const serverFormRef = ref<FormInstance>()
+
+const serverRules: FormRules = {
+  baseApi: [{ required: true, whitespace: true, message: '请输入接口地址', trigger: 'blur' }],
+  staticApi: [{ required: true, whitespace: true, message: '请输入静态资源地址', trigger: 'blur' }]
+}
 
 /** 用本地配置回填服务器设置 */
 function syncServerForm(): void {
@@ -193,38 +209,6 @@ watch(showServer, (value) => {
 
 const REMEMBER_KEY = 'bpm.remember.username'
 
-// 输入时清除对应字段错误
-watch(
-  () => form.username,
-  () => {
-    if (errors.username) errors.username = ''
-  }
-)
-watch(
-  () => form.password,
-  () => {
-    if (errors.password) errors.password = ''
-  }
-)
-watch(
-  () => form.captcha,
-  () => {
-    if (errors.captcha) errors.captcha = ''
-  }
-)
-watch(
-  () => serverForm.baseApi,
-  () => {
-    if (serverErrors.baseApi) serverErrors.baseApi = ''
-  }
-)
-watch(
-  () => serverForm.staticApi,
-  () => {
-    if (serverErrors.staticApi) serverErrors.staticApi = ''
-  }
-)
-
 onMounted(() => {
   const saved = localStorage.getItem(REMEMBER_KEY)
   if (saved) form.username = saved
@@ -232,23 +216,14 @@ onMounted(() => {
   void refreshCaptcha()
 })
 
-/** 登录字段校验（el-form 风格的内联错误，位置已预留） */
-function validate(): boolean {
-  errors.username = form.username.trim() ? '' : '请输入账号'
-  errors.password = form.password ? '' : '请输入密码'
-  errors.captcha = form.captcha.trim() ? '' : '请输入验证码'
-  return !errors.username && !errors.password && !errors.captcha
-}
-
-/** 服务器设置校验：地址不能为空 */
-function validateServer(): boolean {
-  serverErrors.baseApi = serverForm.baseApi.trim() ? '' : '请输入接口地址'
-  serverErrors.staticApi = serverForm.staticApi.trim() ? '' : '请输入静态资源地址'
-  return !serverErrors.baseApi && !serverErrors.staticApi
-}
-
 async function saveServer(): Promise<void> {
-  if (!validateServer()) return
+  const formEl = serverFormRef.value
+  if (!formEl) return
+  const valid = await formEl
+    .validate()
+    .then(() => true)
+    .catch(() => false)
+  if (!valid) return
   try {
     await config.update({
       baseApi: serverForm.baseApi.trim(),
@@ -264,7 +239,13 @@ async function saveServer(): Promise<void> {
 
 async function handleLogin(): Promise<void> {
   error.value = ''
-  if (!validate()) return
+  const formEl = loginFormRef.value
+  if (!formEl) return
+  const valid = await formEl
+    .validate()
+    .then(() => true)
+    .catch(() => false)
+  if (!valid) return
   loading.value = true
   try {
     const result = await Promise.race<LoginResult>([
@@ -371,14 +352,25 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
 .flip.is-flipped .flip__inner {
   transform: rotateY(180deg);
 }
+/* 两面对调可见性时同步切换可点击性，避免背面按钮被正面挡住 */
 .flip__face {
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
+}
+.flip__face--front {
+  pointer-events: auto;
 }
 .flip__face--back {
   position: absolute;
   inset: 0;
   transform: rotateY(180deg);
+  pointer-events: none;
+}
+.flip.is-flipped .flip__face--front {
+  pointer-events: none;
+}
+.flip.is-flipped .flip__face--back {
+  pointer-events: auto;
 }
 
 /* 品牌区（头像居中） */
@@ -403,29 +395,14 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
   letter-spacing: var(--ls-label);
 }
 
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s2);
-}
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-/* 预留错误行高度：出现错误时不引起布局跳动 */
-.field-error {
-  min-height: 15px;
-  font-size: var(--fs-xs);
-  line-height: 15px;
-  color: var(--danger);
-}
+/* 表单项：使用 Element Plus 默认间距（错误提示为绝对定位，默认间距即为预留高度） */
 
 .captcha {
   display: flex;
   gap: var(--s2);
+  width: 100%;
 }
-.captcha :deep(.ui-input-wrap) {
+.captcha :deep(.el-input) {
   flex: 1;
   min-width: 0;
 }
@@ -459,6 +436,7 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  margin-bottom: 12px;
   font-size: var(--fs-sm);
   color: var(--t2);
   cursor: pointer;
