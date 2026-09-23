@@ -33,6 +33,8 @@ export const useConfigStore = defineStore('config', {
     loaded: false,
     baseApi: '',
     staticApi: '',
+    defaultBaseApi: '',
+    defaultStaticApi: '',
     dataDir: '',
     renderMode: 'gpu' as 'gpu' | 'software',
     hotkeys: { ...DEFAULT_HOTKEYS } as HotkeyConfig,
@@ -47,6 +49,8 @@ export const useConfigStore = defineStore('config', {
     apply(config: RuntimeConfig): void {
       this.baseApi = config.baseApi
       this.staticApi = config.staticApi
+      this.defaultBaseApi = config.defaultBaseApi
+      this.defaultStaticApi = config.defaultStaticApi
       this.dataDir = config.dataDir
       this.renderMode = config.renderMode
       this.hotkeys = { ...DEFAULT_HOTKEYS, ...(config.hotkeys ?? {}) }

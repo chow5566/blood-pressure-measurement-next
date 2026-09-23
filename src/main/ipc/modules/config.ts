@@ -4,6 +4,8 @@ import {
   getBaseApi,
   getBScanPrefs,
   getDataDir,
+  getDefaultBaseApi,
+  getDefaultStaticApi,
   getHotkeys,
   getRenderMode,
   getReportTemplate,
@@ -26,6 +28,8 @@ function snapshot(): RuntimeConfig {
   return {
     baseApi: getBaseApi(),
     staticApi: getStaticApi(),
+    defaultBaseApi: getDefaultBaseApi(),
+    defaultStaticApi: getDefaultStaticApi(),
     dataDir: getDataDir(),
     renderMode: getRenderMode(),
     hotkeys: getHotkeys(),

@@ -53,6 +53,10 @@ export interface RuntimeConfig {
   baseApi: string
   /** 静态资源地址（图片） */
   staticApi: string
+  /** 默认接口地址（用于「恢复默认」） */
+  defaultBaseApi: string
+  /** 默认静态资源地址（用于「恢复默认」） */
+  defaultStaticApi: string
   /** 数据目录 */
   dataDir: string
   /** 渲染模式 */

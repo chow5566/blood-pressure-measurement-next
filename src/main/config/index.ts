@@ -62,6 +62,16 @@ const DEFAULT_BASE_API = 'http://www.chealth.cn/health-display-local/'
 /** 默认静态资源地址 */
 const DEFAULT_STATIC_API = 'http://www.chealth.cn/local-data-display/'
 
+/** 默认服务端接口地址（供「恢复默认」使用） */
+export function getDefaultBaseApi(): string {
+  return DEFAULT_BASE_API
+}
+
+/** 默认静态资源地址（供「恢复默认」使用） */
+export function getDefaultStaticApi(): string {
+  return DEFAULT_STATIC_API
+}
+
 /** 数据目录下需要预先创建的子目录 */
 const REQUIRED_SUB_DIRS = ['database', 'images', 'reports', 'temp'] as const
 

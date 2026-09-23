@@ -122,6 +122,12 @@
                   </UiButton>
                   <UiButton variant="primary" size="lg" @click="saveServer">保存</UiButton>
                 </div>
+
+                <div class="restore">
+                  <button class="link" type="button" @click="restoreServerDefaults">
+                    恢复默认地址
+                  </button>
+                </div>
               </el-form>
             </div>
           </div>
@@ -198,6 +204,13 @@ const serverRules: FormRules = {
 function syncServerForm(): void {
   serverForm.baseApi = config.baseApi
   serverForm.staticApi = config.staticApi
+}
+
+/** 恢复默认地址（默认值由主进程下发） */
+function restoreServerDefaults(): void {
+  serverForm.baseApi = config.defaultBaseApi
+  serverForm.staticApi = config.defaultStaticApi
+  serverFormRef.value?.clearValidate()
 }
 
 // 本地配置（异步）加载或变更后回填
@@ -337,7 +350,7 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
 }
 
 .login__panel {
-  width: 272px;
+  width: 288px;
 }
 
 /* ── 翻转卡片 ─────────────────────────────── */
@@ -411,12 +424,12 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 88px;
+  width: 116px;
   height: 40px;
   padding: 0;
   overflow: hidden;
   border: 1px solid var(--line-strong);
-  background: var(--surface-2);
+  background: var(--surface);
   color: var(--t3);
   font-family: inherit;
   font-size: var(--fs-xs);
@@ -429,7 +442,7 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: fill;
 }
 
 .remember {
@@ -453,6 +466,10 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
 }
 .actions :deep(.ui-btn) {
   flex: 1;
+}
+.restore {
+  margin-top: var(--s3);
+  text-align: center;
 }
 
 /* 服务器返回的表单级错误（小字，位置预留） */

@@ -28,8 +28,8 @@
         margin: 0;
       }
       body {
-        background: #f4f4f4;
-        color: #161616;
+        background: #f5f7fa;
+        color: #111827;
         font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', Arial, sans-serif;
         font-size: 13px;
         -webkit-font-smoothing: antialiased;
@@ -39,40 +39,61 @@
         background: #161616;
         color: #f4f4f4;
       }
+      /* 首屏闪屏：品牌 logo + 加载条（样式与应用一致，避免闪烁） */
       .splash {
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         height: 100%;
-        gap: 14px;
+        gap: 18px;
       }
       .splash__logo {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        background: #0f62fe;
-        color: #fff;
-        font-size: 20px;
-        font-weight: 600;
-      }
-      html.dark .splash__logo {
-        background: #4589ff;
+        width: 48px;
+        height: 48px;
+        object-fit: contain;
       }
       .splash__title {
-        font-size: 11px;
-        color: #8d8d8d;
+        font-size: 12px;
+        color: #8b95a5;
         letter-spacing: 0.32px;
+      }
+      .splash__bar {
+        width: 120px;
+        height: 2px;
+        background: #e5e9f0;
+        overflow: hidden;
+      }
+      .splash__bar::after {
+        content: '';
+        display: block;
+        width: 40%;
+        height: 100%;
+        background: #00e676;
+        animation: splash-slide 1s ease-in-out infinite;
+      }
+      html.dark .splash__bar {
+        background: #393939;
+      }
+      html.dark .splash__title {
+        color: #8d8d8d;
+      }
+      @keyframes splash-slide {
+        0% {
+          transform: translateX(-120%);
+        }
+        100% {
+          transform: translateX(320%);
+        }
       }
     </style>
   </head>
   <body>
     <div id="app">
       <div class="splash">
-        <div class="splash__logo">康</div>
+        <img class="splash__logo" src="./src/assets/logo.png" alt="" />
         <div class="splash__title">血压及B超检测</div>
+        <div class="splash__bar"></div>
       </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
