@@ -362,7 +362,8 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
 .flip__inner {
   position: relative;
   transform-style: preserve-3d;
-  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
 }
 .flip.is-flipped .flip__inner {
   transform: rotateY(180deg);
@@ -371,20 +372,31 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
 .flip__face {
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
+  /* 提升为独立合成层 + 透明轮廓：消除 3D 变换时的文字重影/模糊 */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  outline: 1px solid transparent;
+  /* 可见性在旋转中点(90°)对调：任何渲染环境下都不同时显示两面 */
+  transition: visibility 0s linear 0.25s;
 }
 .flip__face--front {
+  visibility: visible;
   pointer-events: auto;
 }
 .flip__face--back {
   position: absolute;
   inset: 0;
-  transform: rotateY(180deg);
+  visibility: hidden;
+  -webkit-transform: rotateY(180deg) translateZ(0.1px);
+  transform: rotateY(180deg) translateZ(0.1px);
   pointer-events: none;
 }
 .flip.is-flipped .flip__face--front {
+  visibility: hidden;
   pointer-events: none;
 }
 .flip.is-flipped .flip__face--back {
+  visibility: visible;
   pointer-events: auto;
 }
 
