@@ -14,30 +14,55 @@
             <!-- 正面：登录 -->
             <div class="flip__face flip__face--front">
               <div class="brand">
-                <UiLogo :size="64" />
+                <UiLogo :size="44" />
                 <div class="brand__name">血压及B超检测</div>
                 <div class="brand__sub">社区体检工作站</div>
               </div>
 
-              <form class="form" @submit.prevent="handleLogin">
-                <UiInput v-model="form.username" size="lg" placeholder="请输入账号" />
-                <UiInput
-                  v-model="form.password"
-                  size="lg"
-                  type="password"
-                  placeholder="请输入密码"
-                />
-                <div class="captcha">
-                  <UiInput v-model="form.captcha" size="lg" placeholder="请输入验证码" />
-                  <button
-                    class="captcha__img"
-                    type="button"
-                    title="点击刷新验证码"
-                    @click="refreshCaptcha"
-                  >
-                    <img v-if="captchaImg" :src="captchaImg" alt="验证码" />
-                    <span v-else>{{ captchaLoading ? '加载中…' : '点击刷新' }}</span>
-                  </button>
+              <form class="form" novalidate @submit.prevent="handleLogin">
+                <div class="field">
+                  <UiInput
+                    v-model="form.username"
+                    size="lg"
+                    icon="user"
+                    :invalid="!!errors.username"
+                    placeholder="请输入账号"
+                  />
+                  <div class="field-error">{{ errors.username }}</div>
+                </div>
+
+                <div class="field">
+                  <UiInput
+                    v-model="form.password"
+                    size="lg"
+                    icon="lock"
+                    type="password"
+                    :invalid="!!errors.password"
+                    placeholder="请输入密码"
+                  />
+                  <div class="field-error">{{ errors.password }}</div>
+                </div>
+
+                <div class="field">
+                  <div class="captcha">
+                    <UiInput
+                      v-model="form.captcha"
+                      size="lg"
+                      icon="shield"
+                      :invalid="!!errors.captcha"
+                      placeholder="请输入验证码"
+                    />
+                    <button
+                      class="captcha__img"
+                      type="button"
+                      title="点击刷新验证码"
+                      @click="refreshCaptcha"
+                    >
+                      <img v-if="captchaImg" :src="captchaImg" alt="验证码" />
+                      <span v-else>{{ captchaLoading ? '加载中…' : '点击刷新' }}</span>
+                    </button>
+                  </div>
+                  <div class="field-error">{{ errors.captcha }}</div>
                 </div>
 
                 <label class="remember">
@@ -48,9 +73,9 @@
                 <UiButton variant="primary" size="lg" block :loading="loading" native-type="submit">
                   登录
                 </UiButton>
-              </form>
 
-              <div v-if="error" class="error">{{ error }}</div>
+                <div class="form-error">{{ error }}</div>
+              </form>
 
               <div class="links">
                 <button class="link" type="button" @click="handleOffline">离线使用</button>
@@ -67,16 +92,26 @@
               </div>
 
               <div class="form">
-                <UiInput
-                  v-model="serverForm.baseApi"
-                  size="lg"
-                  placeholder="http://…/health-display-local/"
-                />
-                <UiInput
-                  v-model="serverForm.staticApi"
-                  size="lg"
-                  placeholder="http://…/local-data-display/"
-                />
+                <div class="field">
+                  <UiInput
+                    v-model="serverForm.baseApi"
+                    size="lg"
+                    :invalid="!!serverErrors.baseApi"
+                    placeholder="接口地址 http://…/health-display-local/"
+                  />
+                  <div class="field-error">{{ serverErrors.baseApi }}</div>
+                </div>
+
+                <div class="field">
+                  <UiInput
+                    v-model="serverForm.staticApi"
+                    size="lg"
+                    :invalid="!!serverErrors.staticApi"
+                    placeholder="静态资源地址 http://…/local-data-display/"
+                  />
+                  <div class="field-error">{{ serverErrors.staticApi }}</div>
+                </div>
+
                 <div class="actions">
                   <UiButton variant="secondary" size="lg" @click="showServer = false">
                     返回
@@ -95,7 +130,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
 import UiLogo from '@r/components/ui/UiLogo.vue'
 import UiInput from '@r/components/ui/UiInput.vue'
 import UiButton from '@r/components/ui/UiButton.vue'
@@ -107,7 +142,7 @@ import { toast } from '@r/utils/toast'
 import { uuid } from '@shared/utils/uuid'
 import type { LoginResult } from '@shared/domain/app'
 
-/** 登录页：账号登录 / 离线使用 / 服务地址设置（翻转卡片） */
+/** 登录页：账号登录 / 离线使用 / 服务地址设置（翻转卡片 + 字段内联校验） */
 const emit = defineEmits<{ enter: []; offline: [] }>()
 
 const config = useConfigStore()
@@ -116,6 +151,7 @@ const userStore = useUserStore()
 const loading = ref(false)
 const error = ref('')
 const form = reactive({ username: '', password: '', captcha: '', rememberMe: true })
+const errors = reactive({ username: '', password: '', captcha: '' })
 
 /* 图形验证码 */
 const captchaImg = ref('')
@@ -125,6 +161,7 @@ const captchaLoading = ref(false)
 async function refreshCaptcha(): Promise<void> {
   captchaUuid.value = uuid()
   form.captcha = ''
+  errors.captcha = ''
   captchaLoading.value = true
   try {
     captchaImg.value = await authApi.captcha(captchaUuid.value)
@@ -137,19 +174,86 @@ async function refreshCaptcha(): Promise<void> {
 
 /** 是否翻转到「服务器设置」背面 */
 const showServer = ref(false)
+/** 服务器设置表单 + 校验（带出本地已保存地址） */
 const serverForm = reactive({ baseApi: config.baseApi, staticApi: config.staticApi })
+const serverErrors = reactive({ baseApi: '', staticApi: '' })
+
+/** 用本地配置回填服务器设置 */
+function syncServerForm(): void {
+  serverForm.baseApi = config.baseApi
+  serverForm.staticApi = config.staticApi
+}
+
+// 本地配置（异步）加载或变更后回填
+watch(() => [config.baseApi, config.staticApi], syncServerForm)
+// 每次打开服务器设置都回填一次最新值
+watch(showServer, (value) => {
+  if (value) syncServerForm()
+})
 
 const REMEMBER_KEY = 'bpm.remember.username'
+
+// 输入时清除对应字段错误
+watch(
+  () => form.username,
+  () => {
+    if (errors.username) errors.username = ''
+  }
+)
+watch(
+  () => form.password,
+  () => {
+    if (errors.password) errors.password = ''
+  }
+)
+watch(
+  () => form.captcha,
+  () => {
+    if (errors.captcha) errors.captcha = ''
+  }
+)
+watch(
+  () => serverForm.baseApi,
+  () => {
+    if (serverErrors.baseApi) serverErrors.baseApi = ''
+  }
+)
+watch(
+  () => serverForm.staticApi,
+  () => {
+    if (serverErrors.staticApi) serverErrors.staticApi = ''
+  }
+)
 
 onMounted(() => {
   const saved = localStorage.getItem(REMEMBER_KEY)
   if (saved) form.username = saved
+  syncServerForm()
   void refreshCaptcha()
 })
 
+/** 登录字段校验（el-form 风格的内联错误，位置已预留） */
+function validate(): boolean {
+  errors.username = form.username.trim() ? '' : '请输入账号'
+  errors.password = form.password ? '' : '请输入密码'
+  errors.captcha = form.captcha.trim() ? '' : '请输入验证码'
+  return !errors.username && !errors.password && !errors.captcha
+}
+
+/** 服务器设置校验：地址不能为空 */
+function validateServer(): boolean {
+  serverErrors.baseApi = serverForm.baseApi.trim() ? '' : '请输入接口地址'
+  serverErrors.staticApi = serverForm.staticApi.trim() ? '' : '请输入静态资源地址'
+  return !serverErrors.baseApi && !serverErrors.staticApi
+}
+
 async function saveServer(): Promise<void> {
+  if (!validateServer()) return
   try {
-    await config.update({ baseApi: serverForm.baseApi, staticApi: serverForm.staticApi })
+    await config.update({
+      baseApi: serverForm.baseApi.trim(),
+      staticApi: serverForm.staticApi.trim()
+    })
     toast('服务地址已保存', 'success')
     showServer.value = false
     void refreshCaptcha()
@@ -160,10 +264,7 @@ async function saveServer(): Promise<void> {
 
 async function handleLogin(): Promise<void> {
   error.value = ''
-  if (!form.captcha.trim()) {
-    error.value = '请输入验证码'
-    return
-  }
+  if (!validate()) return
   loading.value = true
   try {
     const result = await Promise.race<LoginResult>([
@@ -236,7 +337,7 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
 
 /* 顶部拖拽栏：仅放窗口控件 */
 .login__bar {
-  flex: 0 0 40px;
+  flex: 0 0 36px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -251,11 +352,11 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 var(--s5) var(--s4);
+  padding: 0 var(--s4) var(--s2);
 }
 
 .login__panel {
-  width: 300px;
+  width: 272px;
 }
 
 /* ── 翻转卡片 ─────────────────────────────── */
@@ -285,19 +386,19 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--s2);
-  margin-bottom: var(--s6);
-}
-.brand--compact {
+  gap: 6px;
   margin-bottom: var(--s5);
 }
+.brand--compact {
+  margin-bottom: var(--s4);
+}
 .brand__name {
-  font-size: var(--fs-lg);
+  font-size: var(--fs-base);
   font-weight: 600;
   letter-spacing: var(--ls-label);
 }
 .brand__sub {
-  font-size: var(--fs-xs);
+  font-size: var(--fs-micro);
   color: var(--t3);
   letter-spacing: var(--ls-label);
 }
@@ -305,14 +406,26 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
 .form {
   display: flex;
   flex-direction: column;
-  gap: var(--s3);
+  gap: var(--s2);
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+/* 预留错误行高度：出现错误时不引起布局跳动 */
+.field-error {
+  min-height: 15px;
+  font-size: var(--fs-xs);
+  line-height: 15px;
+  color: var(--danger);
 }
 
 .captcha {
   display: flex;
   gap: var(--s2);
 }
-.captcha :deep(.ui-input) {
+.captcha :deep(.ui-input-wrap) {
   flex: 1;
   min-width: 0;
 }
@@ -321,7 +434,7 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 100px;
+  width: 88px;
   height: 40px;
   padding: 0;
   overflow: hidden;
@@ -346,8 +459,7 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-top: 2px;
-  font-size: var(--fs-md);
+  font-size: var(--fs-sm);
   color: var(--t2);
   cursor: pointer;
 }
@@ -365,14 +477,13 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
   flex: 1;
 }
 
-.error {
-  margin-top: var(--s3);
-  padding: var(--s2) var(--s3);
-  border-left: 3px solid var(--danger);
-  background: var(--danger-weak);
+/* 服务器返回的表单级错误（小字，位置预留） */
+.form-error {
+  min-height: 15px;
+  font-size: var(--fs-xs);
+  line-height: 15px;
   color: var(--danger);
-  font-size: var(--fs-md);
-  line-height: 1.5;
+  text-align: center;
 }
 
 .links {
@@ -393,7 +504,7 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
   background: transparent;
   color: var(--accent-ink);
   font-family: inherit;
-  font-size: var(--fs-md);
+  font-size: var(--fs-sm);
   cursor: pointer;
 }
 .link:hover {
@@ -402,9 +513,9 @@ async function showAuthPopup(user: Record<string, unknown> | undefined): Promise
 
 .login__foot {
   flex: 0 0 auto;
-  padding: var(--s4);
+  padding: var(--s3);
   text-align: center;
-  font-size: var(--fs-xs);
+  font-size: var(--fs-micro);
   color: var(--t3);
 }
 </style>

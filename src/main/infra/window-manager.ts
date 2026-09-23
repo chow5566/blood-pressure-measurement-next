@@ -15,7 +15,7 @@ import type { WindowMode } from '../../shared/domain/app'
  */
 
 /** 登录小窗尺寸（约一个表单卡片大小） */
-const LOGIN_SIZE = { width: 460, height: 640 }
+const LOGIN_SIZE = { width: 400, height: 540 }
 /** 主应用窗口尺寸 */
 const MAIN_SIZE = { width: 1280, height: 820 }
 /** 主应用窗口最小尺寸 */
