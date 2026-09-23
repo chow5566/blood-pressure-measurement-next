@@ -18,56 +18,61 @@
         <section class="panel">
           <header class="panel__head">
             <div class="panel__title">服务端</div>
-            <span class="panel__meta">接口契约固定，请勿随意修改</span>
+            <span class="panel__meta">点击右侧可修改，修改后立即生效</span>
           </header>
-          <div class="panel__body">
-            <div class="row">
-              <label class="row__label">服务端地址</label>
-              <div class="row__field">
-                <UiInput v-model="form.baseApi" />
-                <div class="row__desc">后端接口地址，用于登录与数据上传</div>
+          <div class="panel__body is-rows">
+            <div class="srow">
+              <div class="srow__main">
+                <div class="srow__label">服务端地址</div>
+                <div class="srow__desc">后端接口地址，用于登录与数据上传</div>
               </div>
+              <button class="srow__value" type="button" @click="openEdit('baseApi')">
+                {{ config.baseApi || '未设置' }}
+              </button>
             </div>
-            <div class="row">
-              <label class="row__label">静态资源地址</label>
-              <div class="row__field">
-                <UiInput v-model="form.staticApi" />
-                <div class="row__desc">用于加载服务器上的图片资源</div>
+            <div class="srow">
+              <div class="srow__main">
+                <div class="srow__label">静态资源地址</div>
+                <div class="srow__desc">用于加载服务器上的图片资源</div>
               </div>
+              <button class="srow__value" type="button" @click="openEdit('staticApi')">
+                {{ config.staticApi || '未设置' }}
+              </button>
             </div>
           </div>
-          <footer class="pane__foot">
-            <UiButton variant="primary" :loading="saving" @click="saveConfig">保存配置</UiButton>
-          </footer>
         </section>
 
         <section class="panel">
           <header class="panel__head">
             <div class="panel__title">显示</div>
           </header>
-          <div class="panel__body">
-            <div class="row">
-              <label class="row__label">渲染模式</label>
-              <div class="row__field">
-                <select v-model="form.renderMode" class="select">
-                  <option value="gpu">GPU（默认）</option>
-                  <option value="software">软件渲染</option>
-                </select>
-                <div class="row__desc">Win7 显示异常时可切换软件渲染（需重启）</div>
+          <div class="panel__body is-rows">
+            <div class="srow">
+              <div class="srow__main">
+                <div class="srow__label">渲染模式</div>
+                <div class="srow__desc">Win7 显示异常时可切换软件渲染（需重启）</div>
               </div>
+              <el-select
+                :model-value="config.renderMode"
+                class="srow__select"
+                popper-class="app-scope"
+                @change="onRenderModeChange"
+              >
+                <el-option label="GPU（默认）" value="gpu" />
+                <el-option label="软件渲染" value="software" />
+              </el-select>
             </div>
 
-            <div class="row">
-              <label class="row__label">报告模板标题</label>
-              <div class="row__field">
-                <UiInput v-model="form.reportTitle" />
-                <div class="row__desc">B超报告顶部标题（通常为机构名称）</div>
+            <div class="srow">
+              <div class="srow__main">
+                <div class="srow__label">报告模板标题</div>
+                <div class="srow__desc">B超报告顶部标题（通常为机构名称）</div>
               </div>
+              <button class="srow__value" type="button" @click="openEdit('reportTitle')">
+                {{ config.reportTemplate.title || '未设置' }}
+              </button>
             </div>
           </div>
-          <footer class="pane__foot">
-            <UiButton variant="primary" :loading="saving" @click="saveConfig">保存配置</UiButton>
-          </footer>
         </section>
       </template>
 
@@ -302,13 +307,38 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 文本项编辑（点击行内值打开） -->
+    <el-dialog
+      v-model="editVisible"
+      class="app-scope"
+      :title="`修改 · ${editMeta.label}`"
+      width="440px"
+      align-center
+      :lock-scroll="false"
+      @closed="editError = ''"
+    >
+      <div class="edit">
+        <div class="edit__desc">{{ editMeta.desc }}</div>
+        <el-input
+          v-model="editValue"
+          size="large"
+          :placeholder="editMeta.placeholder"
+          @keydown.enter="saveEdit"
+        />
+        <div v-if="editError" class="edit__error">{{ editError }}</div>
+      </div>
+      <template #footer>
+        <el-button @click="editVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveEdit">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import UiButton from '@r/components/ui/UiButton.vue'
-import UiInput from '@r/components/ui/UiInput.vue'
 import UiIcon from '@r/components/ui/UiIcon.vue'
 import StorageView from '@r/views/StorageView.vue'
 import type { IconName } from '@r/components/ui/icons'
@@ -344,13 +374,70 @@ const themeOptions: { id: ThemeMode; label: string; icon: IconName }[] = [
   { id: 'system', label: '跟随系统', icon: 'monitor' }
 ]
 
-const form = reactive({
-  baseApi: config.baseApi,
-  staticApi: config.staticApi,
-  renderMode: config.renderMode,
-  reportTitle: config.reportTemplate.title
-})
-const saving = ref(false)
+// ── 基础配置：文本项点击弹框编辑（修改后立即生效，无需保存按钮） ─────
+type EditKey = 'baseApi' | 'staticApi' | 'reportTitle'
+
+const EDIT_META: Record<EditKey, { label: string; desc: string; placeholder: string }> = {
+  baseApi: {
+    label: '服务端地址',
+    desc: '后端接口地址，用于登录与数据上传。修改后立即生效。',
+    placeholder: 'http://…/health-display-local/'
+  },
+  staticApi: {
+    label: '静态资源地址',
+    desc: '用于加载服务器上的图片资源。修改后立即生效。',
+    placeholder: 'http://…/local-data-display/'
+  },
+  reportTitle: {
+    label: '报告模板标题',
+    desc: 'B超报告顶部标题（通常为机构名称）。修改后立即生效。',
+    placeholder: '如：社区卫生服务中心'
+  }
+}
+
+const editVisible = ref(false)
+const editKey = ref<EditKey>('baseApi')
+const editValue = ref('')
+const editError = ref('')
+const editMeta = computed(() => EDIT_META[editKey.value])
+
+function openEdit(key: EditKey): void {
+  editKey.value = key
+  editValue.value =
+    key === 'baseApi'
+      ? config.baseApi
+      : key === 'staticApi'
+        ? config.staticApi
+        : config.reportTemplate.title
+  editError.value = ''
+  editVisible.value = true
+}
+
+async function saveEdit(): Promise<void> {
+  const value = editValue.value.trim()
+  if (!value) {
+    editError.value = '不能为空'
+    return
+  }
+  try {
+    if (editKey.value === 'baseApi') await config.update({ baseApi: value })
+    else if (editKey.value === 'staticApi') await config.update({ staticApi: value })
+    else await config.update({ reportTemplate: { title: value } })
+    editVisible.value = false
+    toast('已保存', 'success')
+  } catch (error) {
+    editError.value = (error as Error).message
+  }
+}
+
+async function onRenderModeChange(value: string | number | boolean): Promise<void> {
+  try {
+    await config.update({ renderMode: value as 'gpu' | 'software' })
+    toast('已切换（重启后生效）', 'success')
+  } catch (error) {
+    toast((error as Error).message, 'error')
+  }
+}
 
 // ── 快捷键（由注册表按功能分组派生） ─────────────────────
 const hotkeyGroups = groupedHotkeyDefs()
@@ -471,23 +558,6 @@ const updateSummary = computed(() => {
 function openUpdateCenter(): void {
   void updateStore.init()
   updateStore.open()
-}
-
-async function saveConfig(): Promise<void> {
-  saving.value = true
-  try {
-    await config.update({
-      baseApi: form.baseApi,
-      staticApi: form.staticApi,
-      renderMode: form.renderMode,
-      reportTemplate: { title: form.reportTitle }
-    })
-    toast('保存成功', 'success')
-  } catch (error) {
-    toast((error as Error).message, 'error')
-  } finally {
-    saving.value = false
-  }
 }
 
 async function refreshDriver(): Promise<void> {
@@ -627,6 +697,71 @@ onMounted(() => {
 }
 .select:focus {
   border-color: var(--accent);
+}
+
+/* ── 行式设置项：左标题+描述，右控件 ── */
+.panel__body.is-rows {
+  display: flex;
+  flex-direction: column;
+}
+.srow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s5);
+  padding: var(--s4) 0;
+}
+.srow + .srow {
+  border-top: 1px solid var(--line);
+}
+.srow__main {
+  min-width: 0;
+}
+.srow__label {
+  font-size: var(--fs-md);
+  color: var(--t1);
+}
+.srow__desc {
+  margin-top: 3px;
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+  color: var(--t3);
+}
+.srow__value {
+  flex-shrink: 0;
+  max-width: 380px;
+  padding: 4px 8px;
+  overflow: hidden;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--t2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.srow__value:hover {
+  border-color: var(--line-strong);
+  color: var(--t1);
+}
+.srow__select {
+  width: 180px;
+  flex-shrink: 0;
+}
+
+/* 文本项编辑弹框 */
+.edit__desc {
+  margin-bottom: var(--s4);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  color: var(--t3);
+}
+.edit__error {
+  margin-top: var(--s2);
+  font-size: var(--fs-xs);
+  color: var(--danger);
 }
 
 .seg {
