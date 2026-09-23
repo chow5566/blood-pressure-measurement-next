@@ -54,7 +54,7 @@ win:
   target:
     - target: nsis
       arch: [ia32, x64]   # 双架构已确认
-  icon: build/favicon.ico
+  icon: build/icon.png
   electronLanguages: [en-US, zh-CN]
 nsis:
   oneClick: false
@@ -133,7 +133,7 @@ publish:
 | `resources/template/bscan-default.docx` | B超报告模板 |
 | `resources/drivers/vga2usb/V2UInstaller64.msi` | x64 驱动（已有） |
 | `resources/drivers/vga2usb/V2UInstaller32.msi` | **x86 驱动（缺失，需补）** |
-| `build/favicon.ico` | 应用图标 |
+| `build/icon.png` | 应用图标 |
 
 ## 5. 报告模板路径（修正 P8）
 

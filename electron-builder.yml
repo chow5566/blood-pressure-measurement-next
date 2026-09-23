@@ -29,7 +29,8 @@ win:
   executableName: 血压及B超检测
   # 不在此固定 arch：由 CLI（--x64 / --ia32）决定，确保每个架构在对应原生模块下打包
   target: nsis
-  icon: build/favicon.ico
+  # 图标使用主题色 logo（PNG ≥256，electron-builder 自动生成多尺寸 ico）
+  icon: build/icon.png
   electronLanguages:
     - en-US
     - zh-CN
@@ -45,9 +46,6 @@ nsis:
   allowToChangeInstallationDirectory: true
   warningsAsErrors: false
   menuCategory: true
-  installerIcon: './build/favicon.ico'
-  uninstallerIcon: './build/favicon.ico'
-  installerHeaderIcon: './build/favicon.ico'
 # 关闭 npm rebuild，改用 @electron/rebuild 显式重建原生模块（见 docs/08-build-release.md）
 npmRebuild: false
 # 更新源：GitHub Releases。

@@ -18,7 +18,7 @@
 - [ ] `resources/template/bscan-default.docx` 为正式报告模板
 - [ ] `resources/drivers/vga2usb/*.msi` 为**真实**安装包（当前仓库为占位）
 - [ ] VGA2USB 具备 x86 与 x64 两套安装包（按 OS 位数分发）
-- [ ] 图标 `build/favicon.ico` 为正式图标
+- [ ] 图标 `build/icon.png` 为正式图标
 
 ## 3. 安装与启动（Win7 32/64）
 
