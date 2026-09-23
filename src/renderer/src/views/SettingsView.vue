@@ -120,12 +120,12 @@
         <section class="panel">
           <header class="panel__head">
             <div class="panel__title">设备驱动</div>
-            <span class="panel__meta">需自行安装</span>
+            <span class="panel__meta">请自行安装</span>
           </header>
           <div class="panel__body">
             <p class="driver-tip">
-              本应用<strong>不负责安装或维护采集卡驱动</strong>。采集卡（如 VGA2USB
-              等）驱动种类繁多，请根据你实际使用的采集卡型号，自行安装对应的驱动。
+              <strong>温馨提示：</strong>采集卡（如 VGA2USB
+              等）驱动种类繁多，本应用<strong>不再负责驱动的安装与维护</strong>。请您根据实际使用的采集卡型号，自行安装对应驱动。
               本应用仅通过转接头 / VGA 采集卡读取视频流，无需在应用内安装驱动。
             </p>
           </div>
