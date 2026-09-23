@@ -10,7 +10,6 @@
     <template #header>
       <div class="ud__header">
         <div class="ud__title">
-          <UiIcon name="refresh" :size="16" />
           <span>软件更新</span>
         </div>
         <div class="ud__subtitle">{{ subtitle }}</div>

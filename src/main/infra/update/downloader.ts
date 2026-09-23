@@ -7,10 +7,8 @@ import {
   statSync,
   unlinkSync
 } from 'node:fs'
-import { get as httpGet } from 'node:http'
-import { get as httpsGet } from 'node:https'
 import { dirname } from 'node:path'
-import type { ClientRequest, IncomingMessage } from 'node:http'
+import { net } from 'electron'
 import type { WriteStream } from 'node:fs'
 
 /** 下载进度 */
@@ -26,7 +24,7 @@ export interface DownloadProgress {
 }
 
 export interface ResumableDownloadOptions {
-  /** 直链（支持 302 跳转） */
+  /** 直链（自动跟随 302 跳转） */
   url: string
   /** 落盘路径（最终文件，非临时名） */
   targetFile: string
@@ -41,11 +39,26 @@ export interface ResumableDownloadOptions {
 
 type Phase = 'idle' | 'running' | 'paused' | 'done' | 'error'
 
-const MAX_REDIRECTS = 6
+/** Electron 的 IncomingMessage 运行期是 Readable，但类型未声明，这里补充用到的成员 */
+type ElectronResponse = Electron.IncomingMessage & {
+  pause?: () => void
+  resume?: () => void
+  destroy?: () => void
+}
+
 const EMIT_INTERVAL_MS = 200
 
+/** 将证书类错误转为更易读的提示 */
+function friendlyError(error: Error): Error {
+  const message = error?.message || String(error)
+  if (/certificate|CERT_|SSL|TLS|unable to verify/i.test(message)) {
+    return new Error(`下载时证书校验失败：${message}（请检查系统时间/网络代理或证书配置）`)
+  }
+  return error
+}
+
 /**
- * 可断点续传下载器。
+ * 可断点续传下载器（基于 Electron net，使用系统证书库与代理设置）。
  *
  * - 使用 HTTP Range 从已下载位置续传（服务端返回 206 时）。
  * - 暂停保留已下载文件；取消删除之。
@@ -53,7 +66,7 @@ const EMIT_INTERVAL_MS = 200
  * - 不依赖 electron-updater 的下载实现，仅用于把安装包落到其缓存目录后交接。
  */
 export class ResumableDownloader {
-  private request: ClientRequest | null = null
+  private request: Electron.ClientRequest | null = null
   private stream: WriteStream | null = null
   private phase: Phase = 'idle'
   private settled = false
@@ -88,7 +101,6 @@ export class ResumableDownloader {
     mkdirSync(dirname(this.options.targetFile), { recursive: true })
 
     const existing = this.partialBytes
-    // 已下载完（或超过）则直接校验
     if (this.total > 0 && existing >= this.total) {
       this.transferred = existing
       this.verify()
@@ -100,7 +112,7 @@ export class ResumableDownloader {
     this.lastBytes = startAt
     this.lastTime = Date.now()
     this.lastEmit = 0
-    this.fetch(this.options.url, startAt, 0)
+    this.fetch(startAt)
   }
 
   /** 暂停：保留已下载文件，可再次 start 续传 */
@@ -128,7 +140,7 @@ export class ResumableDownloader {
 
   private abort(): void {
     try {
-      this.request?.destroy()
+      this.request?.abort()
     } catch {
       // ignore
     }
@@ -141,55 +153,44 @@ export class ResumableDownloader {
     this.stream = null
   }
 
-  private fetch(url: string, startAt: number, redirects: number): void {
-    let target: URL
+  private fetch(startAt: number): void {
+    let request: Electron.ClientRequest
     try {
-      target = new URL(url)
-    } catch {
-      this.fail(new Error(`非法的下载地址：${url}`))
+      request = net.request({ method: 'GET', url: this.options.url, redirect: 'follow' })
+    } catch (error) {
+      this.fail(friendlyError(error as Error))
       return
     }
-    const getter = target.protocol === 'https:' ? httpsGet : httpGet
-    const headers: Record<string, string> = {
-      'User-Agent': 'blood-pressure-measurement-updater',
-      Accept: 'application/octet-stream'
-    }
-    if (startAt > 0) headers.Range = `bytes=${startAt}-`
-
-    const req = getter(target, { headers }, (res) => this.onResponse(res, url, startAt, redirects))
-    req.on('error', (err) => this.fail(err))
-    this.request = req
+    request.setHeader('User-Agent', 'blood-pressure-measurement-updater')
+    request.setHeader('Accept', 'application/octet-stream')
+    if (startAt > 0) request.setHeader('Range', `bytes=${startAt}-`)
+    request.on('response', (response) => this.onResponse(response as ElectronResponse, startAt))
+    request.on('error', (error) => this.fail(friendlyError(error)))
+    this.request = request
+    request.end()
   }
 
-  private onResponse(res: IncomingMessage, url: string, startAt: number, redirects: number): void {
-    const status = res.statusCode ?? 0
-
-    if (status >= 300 && status < 400 && res.headers.location) {
-      res.resume()
-      if (redirects >= MAX_REDIRECTS) {
-        this.fail(new Error('重定向次数过多'))
-        return
-      }
-      const next = new URL(res.headers.location, url).toString()
-      this.fetch(next, startAt, redirects + 1)
-      return
-    }
+  private onResponse(response: ElectronResponse, startAt: number): void {
+    const status = response.statusCode ?? 0
 
     if (status === 416) {
       // Range 不可满足：视为已下载完成
-      res.resume()
+      response.resume?.()
       this.verify()
       return
     }
 
     if (status !== 200 && status !== 206) {
-      res.resume()
+      response.resume?.()
       this.fail(new Error(`下载失败（HTTP ${status}）`))
       return
     }
 
     const resumable = startAt > 0 && status === 206
-    const contentLength = Number(res.headers['content-length'] ?? 0)
+    const lengthHeader = response.headers['content-length']
+    const contentLength = Number(
+      Array.isArray(lengthHeader) ? lengthHeader[0] : (lengthHeader ?? 0)
+    )
     if (contentLength > 0) {
       this.total = (resumable ? startAt : 0) + contentLength
     }
@@ -200,14 +201,19 @@ export class ResumableDownloader {
 
     const stream = createWriteStream(this.options.targetFile, { flags: resumable ? 'a' : 'w' })
     this.stream = stream
-    res.on('data', (chunk: Buffer) => {
+    response.on('data', (chunk: Buffer) => {
+      const canContinue = stream.write(chunk)
       this.transferred += chunk.length
       this.emitProgress()
+      if (!canContinue) {
+        response.pause?.()
+        stream.once('drain', () => response.resume?.())
+      }
     })
-    res.on('error', (err) => this.fail(err))
-    stream.on('error', (err) => this.fail(err))
+    response.on('end', () => stream.end())
+    response.on('error', (error) => this.fail(friendlyError(error)))
+    stream.on('error', (error) => this.fail(error))
     stream.on('finish', () => this.verify())
-    res.pipe(stream)
   }
 
   private emitProgress(): void {
