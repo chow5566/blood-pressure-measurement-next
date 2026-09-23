@@ -344,9 +344,10 @@ const theme = useThemeStore()
 const arch = ref('')
 const osBitness = computed(() => {
   const value = arch.value.toLowerCase()
-  if (value === 'x64' || value === 'arm64') return '64 位'
-  if (value === 'ia32' || value === 'x86') return '32 位'
-  return arch.value || '—'
+  if (!value) return ''
+  if (value === 'x64' || value === 'arm64') return '当前系统 64 位'
+  if (value === 'ia32' || value === 'x86') return '当前系统 32 位'
+  return `当前系统 ${arch.value}`
 })
 
 type TabId = 'basic' | 'appearance' | 'device' | 'storage' | 'hotkey' | 'about'
