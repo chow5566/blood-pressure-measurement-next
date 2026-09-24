@@ -52,15 +52,23 @@
     <!-- 右：表单与操作 -->
     <section class="panel panel--form">
       <div class="panel__head">
-        <div class="panel__title">检查报告</div>
+        <div class="panel__title">
+          检查报告
+          <span class="net-status" :class="{ 'is-off': !network.online }" :title="network.title">
+            <span class="dot"></span>
+            {{ network.online ? (network.type === 'wifi' ? 'WiFi' : '有线') : '未联网' }}
+          </span>
+        </div>
         <el-checkbox
           v-if="userStore.isOnline === 'Y'"
           v-model="store.isOnline"
+          :disabled="!network.online"
           @change="handleOnlineChange"
         >
           联网使用
         </el-checkbox>
       </div>
+      <div v-if="!network.online" class="net-banner">网络未连接，将先保存在本地，联网后可补传</div>
       <div class="panel__scroll">
         <FormView ref="formRef" />
       </div>
@@ -102,6 +110,7 @@ import HotkeyTooltip from '@r/components/HotkeyTooltip.vue'
 import { useBScanStore, type TempPic } from '@r/stores/b-scan'
 import { useUserStore } from '@r/stores/user'
 import { useConfigStore } from '@r/stores/config'
+import { useNetworkStore } from '@r/stores/network'
 import { bScanApi, persistBScanImages } from '@r/api/b-scan'
 import { wordToImage, toPngDataUrl } from '@r/utils/docx'
 import { buildBScanReportParams } from '@r/utils/bscan-report'
@@ -115,6 +124,7 @@ import type { BScanImage } from '@shared/domain/b-scan'
 const store = useBScanStore()
 const userStore = useUserStore()
 const config = useConfigStore()
+const network = useNetworkStore()
 
 /** 采集快捷键文案（跟随设置动态变化） */
 const takePhotoLabel = computed(() => comboText(config.hotkeys.takePhoto))
@@ -162,8 +172,8 @@ function handleOnlineChange(): void {
   formRef.value?.handleGetInfo()
 }
 
-/** 是否联网使用（联网使用勾选 + 已登录）：关闭时只提供本地保存 */
-const isOnlineQuery = computed(() => store.isOnline && userStore.isOnline === 'Y')
+/** 是否联网使用（联网使用勾选 + 已登录 + 网络可用）：否则仅本地保存 */
+const isOnlineQuery = computed(() => store.isOnline && userStore.isOnline === 'Y' && network.online)
 
 /** 切换图片勾选（最多 4 张） */
 function toggleCheck(pic: TempPic): void {
@@ -402,6 +412,35 @@ useHotkey('openTemplate', () => formRef.value?.openTemplateDialog(), 'collect')
   padding: 8px var(--s4);
   border-top: 1px solid var(--line);
   background: var(--foot-bg);
+}
+
+/* 头部联网状态徽标 */
+.net-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 8px;
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  color: var(--ok);
+}
+.net-status.is-off {
+  color: var(--t3);
+}
+.net-status .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* 离线提示条 */
+.net-banner {
+  padding: 6px var(--s4);
+  border-bottom: 1px solid var(--line);
+  background: var(--warn-weak);
+  color: var(--warn);
+  font-size: var(--fs-xs);
 }
 
 .gallery {

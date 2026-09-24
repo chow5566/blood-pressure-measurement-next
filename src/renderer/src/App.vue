@@ -98,30 +98,72 @@
 
       <!-- 底栏：实时系统状态 -->
       <footer class="footer">
-        <span class="footer__item" :title="netTitle">
-          <template v-if="net.type === 'wifi'">
-            <svg class="net-bars" width="15" height="13" viewBox="0 0 15 13" aria-hidden="true">
-              <rect
-                v-for="(h, i) in WIFI_BAR_HEIGHTS"
-                :key="i"
-                :x="i * 4"
-                :y="13 - h"
-                width="3"
-                :height="h"
-                :class="{ 'is-on': i < wifiBars }"
+        <el-popover
+          trigger="click"
+          placement="top-start"
+          :width="264"
+          popper-class="app-scope net-popover"
+        >
+          <template #reference>
+            <span class="footer__item footer__item--btn" :title="network.title">
+              <template v-if="network.type === 'wifi'">
+                <svg class="net-bars" width="15" height="13" viewBox="0 0 15 13" aria-hidden="true">
+                  <rect
+                    v-for="(h, i) in WIFI_BAR_HEIGHTS"
+                    :key="i"
+                    :x="i * 4"
+                    :y="13 - h"
+                    width="3"
+                    :height="h"
+                    :class="{ 'is-on': i < network.wifiBars }"
+                  />
+                </svg>
+                WiFi
+              </template>
+              <template v-else-if="network.type === 'wired'">
+                <UiIcon name="ethernet" :size="14" />
+                有线
+              </template>
+              <template v-else>
+                <span class="dot"></span>
+                未联网
+              </template>
+            </span>
+          </template>
+
+          <div class="net-panel">
+            <div class="net-panel__row">
+              <span>连接方式</span>
+              <b>{{
+                network.type === 'wifi' ? 'WiFi' : network.type === 'wired' ? '有线' : '未连接'
+              }}</b>
+            </div>
+            <div v-if="network.type === 'wifi'" class="net-panel__row">
+              <span>网络名称</span>
+              <b>{{ network.wifiSsid || '—' }}</b>
+            </div>
+            <div v-if="network.type === 'wifi'" class="net-panel__row">
+              <span>信号强度</span>
+              <b>{{ network.wifiSignal != null ? network.wifiSignal + '%' : '—' }}</b>
+            </div>
+            <div class="net-panel__row">
+              <span>最后检测</span>
+              <b>{{ lastCheckedText }}</b>
+            </div>
+            <div class="net-panel__sep"></div>
+            <label class="net-panel__switch">
+              <el-switch
+                :model-value="config.bScanPrefs.online"
+                :disabled="!network.online"
+                @change="toggleOnline"
               />
-            </svg>
-            WiFi
-          </template>
-          <template v-else-if="net.type === 'wired'">
-            <UiIcon name="ethernet" :size="14" />
-            有线
-          </template>
-          <template v-else>
-            <span class="dot"></span>
-            未联网
-          </template>
-        </span>
+              <span>B超联网使用</span>
+            </label>
+            <div class="net-panel__hint">
+              {{ network.online ? '可在线查询与上传' : '网络未连接，将仅保存在本地' }}
+            </div>
+          </div>
+        </el-popover>
         <span class="footer__item" title="操作系统位数">
           <UiIcon name="cpu" :size="13" />
           系统 {{ osBitness }}
@@ -142,7 +184,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import LoginView from '@r/views/LoginView.vue'
 import WindowControls from '@r/components/WindowControls.vue'
@@ -157,10 +199,12 @@ import { useConfigStore } from '@r/stores/config'
 import { useUserStore } from '@r/stores/user'
 import { useThemeStore, type ThemeMode } from '@r/stores/theme'
 import { useUpdateStore } from '@r/stores/update'
+import { useNetworkStore } from '@r/stores/network'
 import { authApi } from '@r/api/auth'
 import { appApi } from '@r/api/app'
 import { windowApi } from '@r/api/window'
 import { confirmBox } from '@r/utils/confirm'
+import { formatDateTime } from '@shared/utils/format'
 import { configureHotkeys, installHotkeys, setPageScope } from '@r/hotkeys/manager'
 import type { HotkeyScope } from '@shared/domain/hotkeys'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
@@ -175,52 +219,27 @@ const route = useRoute()
 const router = useRouter()
 const entered = ref(false)
 
-/** 底栏系统状态：网络类型 / WiFi 信号 / 系统位数 */
-const net = reactive<{
-  online: boolean
-  type: 'wired' | 'wifi' | 'none'
-  wifiSignal: number | null
-  wifiSsid: string | null
-}>({
-  online: true,
-  type: 'wired',
-  wifiSignal: null,
-  wifiSsid: null
-})
+/** 网络状态（统一来源） */
+const network = useNetworkStore()
 const osArch = ref<'x86' | 'x64'>('x64')
 const osBitness = computed(() => (osArch.value === 'x64' ? '64 位' : '32 位'))
 
 /** WiFi 信号格（4 格，按信号强度点亮） */
 const WIFI_BAR_HEIGHTS = [4, 7, 10, 13]
-const wifiBars = computed(() => {
-  const signal = net.wifiSignal ?? 0
-  if (signal >= 75) return 4
-  if (signal >= 50) return 3
-  if (signal >= 25) return 2
-  if (signal > 0) return 1
-  return 0
-})
-const netTitle = computed(() => {
-  if (net.type === 'wifi') {
-    const suffix = net.wifiSignal != null ? ` · 信号 ${net.wifiSignal}%` : ''
-    return `${net.wifiSsid || 'WiFi'}${suffix}`
-  }
-  if (net.type === 'wired') return '有线网络'
-  return '网络未连接'
-})
 
-async function refreshNetStatus(): Promise<void> {
+/** 最近检测时间 HH:mm:ss */
+const lastCheckedText = computed(() =>
+  network.lastCheckedAt ? formatDateTime(new Date(network.lastCheckedAt)).slice(11) : '—'
+)
+
+/** 联网使用开关：写回 B超偏好 */
+async function toggleOnline(value: string | number | boolean): Promise<void> {
   try {
-    const status = await appApi.netStatus()
-    net.online = status.online
-    net.type = status.type
-    net.wifiSignal = status.wifiSignal
-    net.wifiSsid = status.wifiSsid
+    await config.update({ bScanPrefs: { ...config.bScanPrefs, online: Boolean(value) } })
   } catch {
     // 忽略
   }
 }
-let netTimer: ReturnType<typeof setInterval> | null = null
 /** 登录/退出切换中：盖一层品牌遮罩，避免窗口缩放时露出不匹配的画面 */
 const switching = ref(false)
 
@@ -391,13 +410,11 @@ onMounted(async () => {
       osArch.value = info.osArch
     })
     .catch(() => undefined)
-  void refreshNetStatus()
-  netTimer = setInterval(refreshNetStatus, 4000)
+  network.start()
 })
 
 onUnmounted(() => {
-  if (netTimer) clearInterval(netTimer)
-  netTimer = null
+  network.stop()
 })
 
 /** 启动后自动检查更新（发现新版本会自动弹框；忽略的版本不弹；开发环境不检查） */
@@ -632,6 +649,53 @@ async function autoCheckUpdate(): Promise<void> {
 }
 .net-bars rect.is-on {
   fill: var(--t1);
+}
+
+/* 底栏网络项可点击 */
+.footer__item--btn {
+  cursor: pointer;
+}
+.footer__item--btn:hover {
+  color: var(--t1);
+}
+
+/* 网络详情面板 */
+.net-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.net-panel__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--fs-sm);
+  color: var(--t2);
+}
+.net-panel__row b {
+  max-width: 160px;
+  overflow: hidden;
+  color: var(--t1);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.net-panel__sep {
+  height: 1px;
+  background: var(--line);
+}
+.net-panel__switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-sm);
+  color: var(--t1);
+  cursor: pointer;
+}
+.net-panel__hint {
+  font-size: var(--fs-xs);
+  color: var(--t3);
 }
 
 /* 登录/退出切换遮罩（品牌闪屏） */

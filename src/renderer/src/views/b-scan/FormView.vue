@@ -218,6 +218,7 @@ import { bScanApi } from '@r/api/b-scan'
 import { useBScanStore, type TempPic } from '@r/stores/b-scan'
 import { useUserStore } from '@r/stores/user'
 import { useConfigStore } from '@r/stores/config'
+import { useNetworkStore } from '@r/stores/network'
 import { buildTree } from '@r/utils/tree'
 import { BSCAN_FORM_RULES } from '@r/utils/bscan-form'
 import { comboText, matchesHotkey } from '@r/utils/hotkey'
@@ -259,6 +260,7 @@ const originalBarcode = ref('')
 type TemplateNode = BScanTemplate & { children?: TemplateNode[] }
 
 const config = useConfigStore()
+const network = useNetworkStore()
 
 const templateDialogVisible = ref(false)
 const templateLoading = ref(false)
@@ -461,8 +463,8 @@ async function handleGetInfo(): Promise<void> {
     originalBarcode.value = formData.barcode
     store.setBarcodeConfirmed(true)
 
-    // 联网使用：拉取在线数据（失败静默，保留本地）
-    if (store.isOnline && userStore.isOnline === 'Y') {
+    // 联网使用：拉取在线数据（失败静默，保留本地）；网络未连接时跳过
+    if (store.isOnline && userStore.isOnline === 'Y' && network.online) {
       await mergeOnlineData(token)
     }
   } catch {
