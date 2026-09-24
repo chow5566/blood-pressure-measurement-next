@@ -74,6 +74,8 @@ export interface RuntimeConfig {
   reportTemplate: ReportTemplateConfig
   /** B超采集偏好 */
   bScanPrefs: BScanPrefs
+  /** 血压测量后是否自动上传（关闭则仅本地保存，需手动补传） */
+  bpAutoUpload: boolean
   /** 是否已登录（token 非空）；不下发 token 明文 */
   loggedIn: boolean
   /** 当前登录用户名 */
@@ -91,6 +93,7 @@ export interface RuntimeConfigPatch {
   videoFilter?: VideoFilterConfig
   reportTemplate?: ReportTemplateConfig
   bScanPrefs?: BScanPrefs
+  bpAutoUpload?: boolean
 }
 
 /** 登录入参 */

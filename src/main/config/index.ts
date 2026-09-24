@@ -36,6 +36,8 @@ export interface AppConfig {
   reportTemplate: ReportTemplateConfig
   /** B超采集偏好 */
   bScanPrefs: BScanPrefs
+  /** 血压测量后是否自动上传 */
+  bpAutoUpload: boolean
   /** 登录令牌（由登录流程写入） */
   token: string
   /** 当前登录用户名 */
@@ -94,6 +96,7 @@ function getStore(): Store<AppConfig> {
       videoFilter: DEFAULT_VIDEO_FILTER,
       reportTemplate: DEFAULT_REPORT_TEMPLATE,
       bScanPrefs: DEFAULT_BSCAN_PREFS,
+      bpAutoUpload: true,
       token: '',
       username: ''
     }
@@ -231,6 +234,16 @@ export function getBScanPrefs(): BScanPrefs {
 /** 设置 B超采集偏好 */
 export function setBScanPrefs(prefs: BScanPrefs): void {
   getStore().set('bScanPrefs', prefs)
+}
+
+/** 血压测量后是否自动上传 */
+export function getBpAutoUpload(): boolean {
+  return getStore().get('bpAutoUpload')
+}
+
+/** 设置血压测量后是否自动上传 */
+export function setBpAutoUpload(enabled: boolean): void {
+  getStore().set('bpAutoUpload', enabled)
 }
 
 /** 当前登录用户名 */

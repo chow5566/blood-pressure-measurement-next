@@ -277,10 +277,17 @@ async function handleUpload(): Promise<void> {
     })
     status.value = 'success'
     formData.codeBar = null
+    const tips = result.uploaded
+      ? '，数据已上传'
+      : result.reason === 'offline'
+        ? '，已离线保存，联网后可在历史记录中补传'
+        : result.reason === 'disabled'
+          ? '，已保存到本地（已关闭自动上传）'
+          : '，上传失败，请在历史记录中查看'
     ElNotification({
       title: '测量结果',
-      message: `条码号：${result.codeBar}${result.uploaded ? '，数据已上传' : '，上传失败，请在历史记录中查看'}`,
-      type: result.uploaded ? 'success' : 'warning',
+      message: `条码号：${result.codeBar}${tips}`,
+      type: result.uploaded ? 'success' : result.reason === 'disabled' ? 'info' : 'warning',
       position: 'bottom-right',
       duration: 10000
     })

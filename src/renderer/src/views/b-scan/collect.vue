@@ -414,26 +414,6 @@ useHotkey('openTemplate', () => formRef.value?.openTemplateDialog(), 'collect')
   background: var(--foot-bg);
 }
 
-/* 头部联网状态徽标 */
-.net-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin-left: 8px;
-  font-size: var(--fs-xs);
-  font-weight: 400;
-  color: var(--ok);
-}
-.net-status.is-off {
-  color: var(--t3);
-}
-.net-status .dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
 /* 离线提示条 */
 .net-banner {
   padding: 6px var(--s4);

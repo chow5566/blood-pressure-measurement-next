@@ -101,12 +101,17 @@ export interface BloodPressureSubmitInput {
   collectTime?: string
 }
 
+/** 未上传原因：offline 网络未连接 / disabled 已关闭自动上传 / failed 上传失败 */
+export type BloodPressureSkipReason = 'offline' | 'disabled' | 'failed'
+
 /** 一次测量落库 + 上传的结果 */
 export interface BloodPressureRecordResult {
   id: number
   codeBar: string
   /** 是否已上传成功 */
   uploaded: boolean
+  /** 未上传原因（uploaded 为 false 时给出） */
+  reason?: BloodPressureSkipReason
   /** 失败/提示信息 */
   message?: string
 }

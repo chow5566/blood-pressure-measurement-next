@@ -41,6 +41,7 @@ export const useConfigStore = defineStore('config', {
     videoFilter: { ...DEFAULT_VIDEO_FILTER } as VideoFilterConfig,
     reportTemplate: { ...DEFAULT_REPORT_TEMPLATE } as ReportTemplateConfig,
     bScanPrefs: { ...DEFAULT_BSCAN_PREFS } as BScanPrefs,
+    bpAutoUpload: true,
     loggedIn: false,
     username: '',
     version: ''
@@ -57,6 +58,7 @@ export const useConfigStore = defineStore('config', {
       this.videoFilter = { ...DEFAULT_VIDEO_FILTER, ...(config.videoFilter ?? {}) }
       this.reportTemplate = config.reportTemplate ?? { ...DEFAULT_REPORT_TEMPLATE }
       this.bScanPrefs = config.bScanPrefs ?? { ...DEFAULT_BSCAN_PREFS }
+      this.bpAutoUpload = config.bpAutoUpload ?? true
       this.loggedIn = config.loggedIn
       this.username = config.username
       this.version = config.version

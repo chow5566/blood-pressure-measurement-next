@@ -2,11 +2,14 @@ import { repositories } from '../../infra/database'
 import { uploadBloodPressure } from '../../infra/http/uploader'
 import { assertSpaceForWrite } from '../../infra/storage'
 import { maintenance } from '../../infra/maintenance'
+import { getBpAutoUpload } from '../../config'
+import { isOnline } from '../../infra/network'
 import { formatDateTime } from '../../utils/datetime'
 import { BloodPressureStatus } from '../../../shared/domain/blood-pressure'
 import type {
   BloodPressureRecord,
   BloodPressureRecordResult,
+  BloodPressureSkipReason,
   BloodPressureSubmitInput,
   BloodPressureUploadFailure,
   BloodPressureUploadResult
@@ -72,13 +75,28 @@ export async function recordBloodPressure(
     dataContent.leftDbp = input.dbp
   }
 
-  // 3) 上传
-  const upload = await uploadBloodPressure(dataContent)
-  if (upload.ok) {
-    repositories.bloodPressure.updateStatus(id, BloodPressureStatus.Uploaded)
+  // 3) 上传：关闭自动上传或网络未连接时直接本地留存，避免无谓的 HTTP 等待
+  let uploaded = false
+  let reason: BloodPressureSkipReason | undefined
+  let message: string | undefined
+
+  if (!getBpAutoUpload()) {
+    reason = 'disabled'
+  } else if (!isOnline()) {
+    reason = 'offline'
+    message = '网络未连接'
+  } else {
+    const upload = await uploadBloodPressure(dataContent)
+    uploaded = upload.ok
+    if (upload.ok) {
+      repositories.bloodPressure.updateStatus(id, BloodPressureStatus.Uploaded)
+    } else {
+      reason = 'failed'
+      message = upload.message
+    }
   }
 
-  return { id, codeBar, uploaded: upload.ok, message: upload.message }
+  return { id, codeBar, uploaded, reason, message }
 }
 
 /** 分页查询血压历史 */

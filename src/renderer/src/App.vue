@@ -159,6 +159,10 @@
               />
               <span>B超联网使用</span>
             </label>
+            <label class="net-panel__switch">
+              <el-switch :model-value="config.bpAutoUpload" @change="toggleBpAutoUpload" />
+              <span>血压自动上传</span>
+            </label>
             <div class="net-panel__hint">
               {{ network.online ? '可在线查询与上传' : '网络未连接，将仅保存在本地' }}
             </div>
@@ -236,6 +240,15 @@ const lastCheckedText = computed(() =>
 async function toggleOnline(value: string | number | boolean): Promise<void> {
   try {
     await config.update({ bScanPrefs: { ...config.bScanPrefs, online: Boolean(value) } })
+  } catch {
+    // 忽略
+  }
+}
+
+/** 血压自动上传开关 */
+async function toggleBpAutoUpload(value: string | number | boolean): Promise<void> {
+  try {
+    await config.update({ bpAutoUpload: Boolean(value) })
   } catch {
     // 忽略
   }

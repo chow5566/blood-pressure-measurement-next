@@ -3,6 +3,7 @@ import { handle } from '../registry'
 import {
   getBaseApi,
   getBScanPrefs,
+  getBpAutoUpload,
   getDataDir,
   getDefaultBaseApi,
   getDefaultStaticApi,
@@ -15,6 +16,7 @@ import {
   getVideoFilter,
   setBaseApi,
   setBScanPrefs,
+  setBpAutoUpload,
   setHotkeys,
   setRenderMode,
   setReportTemplate,
@@ -36,6 +38,7 @@ function snapshot(): RuntimeConfig {
     videoFilter: getVideoFilter(),
     reportTemplate: getReportTemplate(),
     bScanPrefs: getBScanPrefs(),
+    bpAutoUpload: getBpAutoUpload(),
     loggedIn: !!getToken(),
     username: getUsername(),
     version: app.getVersion()
@@ -54,6 +57,7 @@ export function registerConfigIpc(): void {
     if (patch.videoFilter !== undefined) setVideoFilter(patch.videoFilter)
     if (patch.reportTemplate !== undefined) setReportTemplate(patch.reportTemplate)
     if (patch.bScanPrefs !== undefined) setBScanPrefs(patch.bScanPrefs)
+    if (patch.bpAutoUpload !== undefined) setBpAutoUpload(patch.bpAutoUpload)
     return snapshot()
   })
 }

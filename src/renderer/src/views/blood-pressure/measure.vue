@@ -4,9 +4,18 @@
       <div class="app-section-title">
         血压检测
         <small v-if="displayPorts.length">{{ displayPorts.length }} 台设备</small>
+        <span class="net-status" :class="{ 'is-off': !network.online }" :title="network.title">
+          <span class="dot"></span>
+          {{ network.online ? (network.type === 'wifi' ? 'WiFi' : '有线') : '未联网' }}
+        </span>
       </div>
       <div class="bp-measure__bar-actions">
-        <span v-if="displayPorts.length" class="app-hint">血压计用户 A = 左侧，用户 B = 右侧</span>
+        <span v-if="displayPorts.length && !network.online" class="app-hint app-hint--warn">
+          网络未连接，测量结果将仅保存在本地
+        </span>
+        <span v-else-if="displayPorts.length" class="app-hint">
+          血压计用户 A = 左侧，用户 B = 右侧
+        </span>
         <UiButton v-if="isDev && demo" variant="ghost" size="sm" @click="demo = false">
           关闭演示
         </UiButton>
@@ -49,6 +58,7 @@ import BloodPressureCard from '@r/components/BloodPressureCard.vue'
 import LinkLoadingView from '@r/components/LinkLoadingView.vue'
 import UiButton from '@r/components/ui/UiButton.vue'
 import { bloodPressureApi } from '@r/api/blood-pressure'
+import { useNetworkStore } from '@r/stores/network'
 import type { BpPort } from '@shared/domain/blood-pressure'
 
 /**
@@ -58,6 +68,7 @@ import type { BpPort } from '@shared/domain/blood-pressure'
 
 const isDev = import.meta.env.DEV
 const demo = ref(false)
+const network = useNetworkStore()
 const MOCK_PORTS: BpPort[] = [
   { path: 'SIM-1', friendlyName: 'maibobo A（演示）' },
   { path: 'SIM-2', friendlyName: 'maibobo B（演示）' }

@@ -31,6 +31,7 @@
         />
       </div>
       <div class="query-bar__actions">
+        <span v-if="!network.online" class="app-hint app-hint--warn">网络未连接，暂不可补传</span>
         <el-button type="primary" :icon="Search" @click="handleQuery">查询</el-button>
         <el-button :icon="RefreshLeft" @click="handleReset">重置</el-button>
         <HotkeyTooltip id="bpUpload">
@@ -38,7 +39,7 @@
             plain
             :icon="Upload"
             :loading="uploading"
-            :disabled="!selection.length"
+            :disabled="!selection.length || !network.online"
             @click="handleUpload(selection)"
           >
             批量上传
@@ -90,7 +91,14 @@
         />
         <el-table-column label="操作" width="140" align="center" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" plain @click="handleUpload([toRecord(row)])">上传</el-button>
+            <el-button
+              size="small"
+              plain
+              :disabled="!network.online"
+              @click="handleUpload([toRecord(row)])"
+            >
+              上传
+            </el-button>
             <el-button size="small" type="danger" plain @click="handleDelete(toRecord(row))">
               删除
             </el-button>
@@ -132,6 +140,7 @@ import BatchUploadProgress from '@r/components/BatchUploadProgress.vue'
 import HotkeyTooltip from '@r/components/HotkeyTooltip.vue'
 import { bloodPressureApi } from '@r/api/blood-pressure'
 import { runLimited } from '@r/utils/async'
+import { useNetworkStore } from '@r/stores/network'
 import { useHotkey } from '@r/hotkeys/useHotkey'
 import type { BloodPressureRecord } from '@shared/domain/blood-pressure'
 
@@ -152,6 +161,7 @@ const total = ref(0)
 const loading = ref(false)
 const uploading = ref(false)
 const selection = ref<BloodPressureRecord[]>([])
+const network = useNetworkStore()
 
 /** el-table 行类型收窄 */
 function toRecord(row: unknown): BloodPressureRecord {
@@ -239,6 +249,10 @@ const batch = reactive({ total: 0, done: 0, success: 0, failed: [] as string[], 
 
 /** 单条/批量补传（并发 3，带进度弹框） */
 async function handleUpload(targets: BloodPressureRecord[]): Promise<void> {
+  if (!network.online) {
+    ElMessage.warning('网络未连接，暂不可上传')
+    return
+  }
   const ids = targets.map((item) => item.id).filter((id): id is number => typeof id === 'number')
   if (!ids.length) {
     ElMessage.error('请选择要上传的数据')

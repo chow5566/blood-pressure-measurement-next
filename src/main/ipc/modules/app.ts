@@ -1,8 +1,8 @@
-import { app, net, shell } from 'electron'
-import { execFile } from 'node:child_process'
+import { app, shell } from 'electron'
 import { handle } from '../registry'
 import { getDataDir } from '../../config'
 import { getDatabaseFile, isDatabaseOpen } from '../../infra/database'
+import { isOnline, readWifi } from '../../infra/network'
 import { logger } from '../../infra/logger'
 import type { AppInfo } from '../../../shared/ipc'
 import type { NetStatus } from '../../../shared/domain/app'
@@ -15,38 +15,6 @@ function detectOsArch(): 'x86' | 'x64' {
   const pa = process.env.PROCESSOR_ARCHITECTURE || ''
   const paW = process.env.PROCESSOR_ARCHITEW6432 || ''
   return pa.includes('64') || paW.includes('64') ? 'x64' : 'x86'
-}
-
-/** 读取 WiFi 连接状态、信号强度与 SSID（Windows：netsh；失败返回未连接） */
-function readWifi(): Promise<{ connected: boolean; signal: number | null; ssid: string | null }> {
-  return new Promise((resolve) => {
-    if (process.platform !== 'win32') {
-      resolve({ connected: false, signal: null, ssid: null })
-      return
-    }
-    // chcp 65001 强制 UTF-8，避免中文系统下 SSID 乱码；
-    // 解析用 ASCII 锚点（SSID 标签 & 唯一百分数），不依赖本地化中文标签。
-    execFile(
-      'cmd',
-      ['/c', 'chcp 65001>nul & netsh wlan show interfaces'],
-      { windowsHide: true, timeout: 4000, encoding: 'utf-8' },
-      (error, stdout) => {
-        if (error || !stdout) {
-          resolve({ connected: false, signal: null, ssid: null })
-          return
-        }
-        const ssidMatch = /^\s*SSID\s*[:：]\s*(.+)$/m.exec(stdout)
-        const signalMatch = /[:：]\s*(\d{1,3})\s*%/m.exec(stdout)
-        const ssid = ssidMatch ? ssidMatch[1].trim() : ''
-        const connected = ssid.length > 0
-        resolve({
-          connected,
-          signal: connected && signalMatch ? Number(signalMatch[1]) : null,
-          ssid: connected ? ssid : null
-        })
-      }
-    )
-  })
 }
 
 /**
@@ -89,12 +57,7 @@ export function registerAppIpc(): void {
 
   handle('app:net-status', async (): Promise<NetStatus> => {
     const wifi = await readWifi()
-    let online = true
-    try {
-      online = net.isOnline()
-    } catch {
-      online = true
-    }
+    const online = isOnline()
     const type: NetStatus['type'] = wifi.connected ? 'wifi' : online ? 'wired' : 'none'
     return { online, type, wifiSignal: wifi.connected ? wifi.signal : null, wifiSsid: wifi.ssid }
   })

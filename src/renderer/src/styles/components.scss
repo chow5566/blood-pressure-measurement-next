@@ -78,6 +78,30 @@
   color: var(--t3);
   line-height: 1.5;
 }
+.app-hint--warn {
+  color: var(--warn);
+}
+
+/* 联网状态徽标（底栏 / 页面通用） */
+.net-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: center;
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--ok);
+}
+.net-status.is-off {
+  color: var(--t3);
+}
+.net-status .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
 
 /* ── 域内 Tab 条（血压 / B超 / 设置共用） ─────────── */
 .tabs {
