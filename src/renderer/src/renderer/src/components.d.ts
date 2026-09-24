@@ -10,6 +10,7 @@ declare module 'vue' {
     BatchUploadProgress: typeof import('./../../components/BatchUploadProgress.vue')['default']
     BloodPressureCard: typeof import('./../../components/BloodPressureCard.vue')['default']
     ConfirmHost: typeof import('./../../components/ui/ConfirmHost.vue')['default']
+    ElAutocomplete: typeof import('element-plus/es')['ElAutocomplete']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElCheckbox: typeof import('element-plus/es')['ElCheckbox']
     ElConfigProvider: typeof import('element-plus/es')['ElConfigProvider']

@@ -114,37 +114,38 @@
       v-model="templateDialogVisible"
       class="app-scope"
       title="选择模板"
-      width="720px"
+      width="820px"
       align-center
       draggable
       @opened="onTemplateOpened"
       @closed="onTemplateClosed"
     >
       <div class="tpl-picker">
-        <div class="tpl-picker__left">
-          <el-input
-            ref="templateSearchRef"
-            v-model="templateKeyword"
-            size="small"
-            placeholder="搜索模板 / 类型"
-            clearable
-            :prefix-icon="Search"
-          />
-
-          <div v-if="recentTemplates.length" class="tpl-recent">
-            <div class="tpl-recent__label">最近使用</div>
-            <div class="tpl-recent__list">
-              <button
-                v-for="item in recentTemplates"
-                :key="item.id"
-                class="tpl-recent__chip"
-                :title="item.title"
-                @click="handleTemplateNodeClick(item)"
-                @dblclick="handleTemplateDblClick(item, $event)"
-              >
-                {{ item.title }}
-              </button>
-            </div>
+        <!-- 左：模板树 -->
+        <section class="panel tpl-picker__left">
+          <div class="panel__head">
+            <div class="panel__title">模板</div>
+            <el-autocomplete
+              ref="templateSearchRef"
+              v-model="templateKeyword"
+              class="tpl-search"
+              size="small"
+              placeholder="搜索模板 / 类型"
+              clearable
+              popper-class="tpl-suggest-popper"
+              :fetch-suggestions="fetchRecentSuggestions"
+              @select="handleRecentSelect"
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+              <template #default="{ item }">
+                <div class="tpl-suggest">
+                  <span class="tpl-suggest__name">{{ item.title || '未命名' }}</span>
+                  <span class="tpl-suggest__type">{{ item.typeName || '最近使用' }}</span>
+                </div>
+              </template>
+            </el-autocomplete>
           </div>
 
           <div v-loading="templateLoading" class="tpl-picker__tree">
@@ -160,32 +161,46 @@
               @node-click="handleTemplateNodeClick"
             >
               <template #default="{ data }">
-                <span class="tpl-tree-node" @dblclick.stop="handleTemplateDblClick(data, $event)">
-                  <el-icon :size="13">
+                <div class="tpl-node" @dblclick.stop="handleTemplateDblClick(data, $event)">
+                  <el-icon class="tpl-node__icon" :size="14">
                     <Folder v-if="data.dataType === 'TYPE'" />
                     <Document v-else />
                   </el-icon>
-                  <span class="tpl-tree-node__name">
+                  <span class="tpl-node__name">
                     {{
                       data.dataType === 'TYPE' ? data.typeName || '未命名' : data.title || '未命名'
                     }}
                   </span>
-                </span>
+                </div>
               </template>
             </el-tree>
           </div>
-        </div>
+        </section>
 
-        <div class="tpl-picker__right">
-          <template v-if="currentTemplate?.id">
-            <div class="tpl-preview__title">{{ currentTemplate.title }}</div>
-            <div class="tpl-preview__label">诊断结果</div>
-            <div class="tpl-preview__text">{{ currentTemplate.diagnosis || '—' }}</div>
-            <div class="tpl-preview__label">诊断描述</div>
-            <div class="tpl-preview__text">{{ currentTemplate.diagnosisDetails || '—' }}</div>
-          </template>
-          <el-empty v-else description="请选择左侧模板" />
-        </div>
+        <!-- 右：模板详情 -->
+        <section class="panel tpl-picker__right">
+          <div class="panel__head">
+            <div class="panel__title">模板详情</div>
+            <span v-if="currentTemplate?.id" class="app-tag app-tag--info app-tag--plain">
+              {{ currentTypeName }}
+            </span>
+          </div>
+
+          <div class="tpl-detail">
+            <template v-if="currentTemplate?.id">
+              <div class="tpl-detail__title">{{ currentTemplate.title || '未命名' }}</div>
+              <div class="kv kv--block">
+                <span class="kv__k">诊断结果</span>
+                <span class="kv__v kv__v--text">{{ currentTemplate.diagnosis || '—' }}</span>
+              </div>
+              <div class="kv kv--block">
+                <span class="kv__k">诊断描述</span>
+                <span class="kv__v kv__v--text">{{ currentTemplate.diagnosisDetails || '—' }}</span>
+              </div>
+            </template>
+            <el-empty v-else description="请选择左侧模板" />
+          </div>
+        </section>
       </div>
 
       <template #footer>
@@ -277,6 +292,35 @@ const recentTemplates = computed(() =>
     .map((id) => templates.value.find((item) => item.id === id))
     .filter((item): item is BScanTemplate => !!item && item.dataType === 'TEMPLATE')
 )
+
+/** 当前模板所属类型名（模板自身不带 typeName，取父节点） */
+const currentTypeName = computed(() => {
+  const template = currentTemplate.value
+  if (!template?.id || !template.parentId) return '未分类'
+  const parent = templates.value.find((item) => item.id === template.parentId)
+  return parent?.typeName || '未分类'
+})
+
+/** 搜索框下拉：把「最近使用」作为建议项（随输入过滤） */
+function fetchRecentSuggestions(query: string, callback: (items: BScanTemplate[]) => void): void {
+  const keyword = query.trim().toLowerCase()
+  callback(
+    recentTemplates.value.filter(
+      (item) => !keyword || (item.title ?? '').toLowerCase().includes(keyword)
+    )
+  )
+}
+
+/** 选中下拉里的最近模板：高亮对应树节点并预览 */
+function handleRecentSelect(item: BScanTemplate): void {
+  currentTemplate.value = item
+  templateKeyword.value = ''
+  void nextTick(() => {
+    templateTreeRef.value?.setCurrentKey(item.id)
+    const el = document.querySelector('.tpl-picker__tree .el-tree-node.is-current')
+    el?.scrollIntoView({ block: 'nearest' })
+  })
+}
 
 /** 按树的显示顺序（深度优先）收集模板，用于方向键导航 */
 function collectTemplates(nodes: TemplateNode[]): BScanTemplate[] {
@@ -601,98 +645,103 @@ defineExpose({
   width: 100%;
 }
 
-/* 模板选择弹窗 */
+/* 模板选择弹窗：左右两块 panel（与「模板维护」保持一致） */
 .tpl-picker {
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
-  gap: var(--s4);
-  height: 520px;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: var(--s-card);
+  height: 540px;
 }
-.tpl-picker__left {
+.tpl-picker__left,
+.tpl-picker__right {
   display: flex;
   flex-direction: column;
-  gap: var(--s2);
   min-height: 0;
-  padding-right: var(--s4);
-  border-right: 1px solid var(--line);
+}
+.tpl-search {
+  width: 168px;
 }
 .tpl-picker__tree {
   flex: 1;
   min-height: 0;
   overflow: auto;
+  padding: var(--s1) 0;
 }
-.tpl-picker__right {
-  min-height: 0;
-  overflow: auto;
-}
-.tpl-tree-node {
-  display: inline-flex;
+.tpl-node {
+  display: flex;
+  flex: 1;
   align-items: center;
   gap: 6px;
   min-width: 0;
 }
-.tpl-tree-node .el-icon {
+.tpl-node__icon {
+  flex-shrink: 0;
   color: var(--t3);
 }
-.tpl-tree-node__name {
+.tpl-node__name {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.tpl-preview__title {
-  font-size: var(--fs-lg);
-  font-weight: 600;
-  margin-bottom: var(--s3);
-}
-.tpl-preview__label {
-  font-size: var(--fs-micro);
-  font-weight: 600;
-  letter-spacing: var(--ls-label);
-  text-transform: uppercase;
-  color: var(--t3);
-  margin-bottom: 4px;
-}
-.tpl-preview__text {
-  margin-bottom: var(--s4);
-  font-size: var(--fs-md);
-  color: var(--t2);
-  line-height: 1.7;
-  white-space: pre-wrap;
 }
 
-.tpl-recent {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+/* 右侧详情（键值行，发丝线分隔） */
+.tpl-detail {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--s4);
 }
-.tpl-recent__label {
-  font-size: var(--fs-micro);
+.tpl-detail__title {
+  margin-bottom: var(--s3);
+  font-size: var(--fs-lg);
   font-weight: 600;
-  letter-spacing: var(--ls-label);
-  text-transform: uppercase;
+  line-height: 1.45;
+  color: var(--t1);
+}
+.kv {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: var(--s3);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--fs-md);
+}
+.kv--block {
+  grid-template-columns: 1fr;
+  gap: 4px;
+}
+.kv__k {
   color: var(--t3);
 }
-.tpl-recent__list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+.kv__v {
+  color: var(--t1);
+  word-break: break-word;
 }
-.tpl-recent__chip {
-  max-width: 100%;
-  padding: 2px 8px;
-  border: 1px solid var(--line-strong);
-  background: var(--surface);
+.kv__v--text {
+  white-space: pre-wrap;
+  line-height: 1.6;
   color: var(--t2);
-  font-family: inherit;
-  font-size: var(--fs-sm);
-  cursor: pointer;
+}
+
+/* 搜索框下拉建议（最近使用） */
+.tpl-suggest {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+.tpl-suggest__name {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.tpl-recent__chip:hover {
-  border-color: var(--accent);
-  color: var(--accent-ink);
+.tpl-suggest__type {
+  flex-shrink: 0;
+  font-size: var(--fs-xs);
+  color: var(--t3);
 }
 
 .tpl-footer {

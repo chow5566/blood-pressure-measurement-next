@@ -539,6 +539,15 @@ html.dark .el-image-viewer__mask {
   padding: var(--s3) var(--s4);
   border-top: 1px solid var(--line);
 }
+/* 模板搜索下拉（最近使用） */
+.tpl-suggest-popper {
+  border-radius: 0;
+}
+.tpl-suggest-popper .el-autocomplete-suggestion__list li {
+  padding: 6px 10px;
+  line-height: 1.4;
+  font-size: var(--fs-sm);
+}
 .el-message-box {
   border-radius: 0;
   background: var(--surface);
