@@ -23,6 +23,9 @@ export type IconName =
   | 'user'
   | 'lock'
   | 'shield'
+  | 'wifi'
+  | 'gauge'
+  | 'cpu'
 
 export const ICONS: Record<IconName, string[]> = {
   pulse: ['M3 12h3.5l2-5 3.2 9.5 2.3-6.5 1.6 3H21'],
@@ -83,5 +86,13 @@ export const ICONS: Record<IconName, string[]> = {
     'M6 10.5A1.5 1.5 0 0 1 7.5 9h9A1.5 1.5 0 0 1 18 10.5v8A1.5 1.5 0 0 1 16.5 20h-9A1.5 1.5 0 0 1 6 18.5z',
     'M8.5 9V7.5a3.5 3.5 0 0 1 7 0V9'
   ],
-  shield: ['M12 3l7 2.8v5.4c0 4.3-2.9 8-7 9.3-4.1-1.3-7-5-7-9.3V5.8z', 'M9 12l2 2 4-4.2']
+  shield: ['M12 3l7 2.8v5.4c0 4.3-2.9 8-7 9.3-4.1-1.3-7-5-7-9.3V5.8z', 'M9 12l2 2 4-4.2'],
+  wifi: [
+    'M2.5 8.5a15 15 0 0 1 19 0',
+    'M6 12a10.5 10.5 0 0 1 12 0',
+    'M9.5 15.5a6 6 0 0 1 5 0',
+    'M12 19h.01'
+  ],
+  gauge: ['M4 18a8 8 0 0 1 16 0', 'M12 14l3.6-2.6'],
+  cpu: ['M7 7h10v10H7z', 'M10 10h4v4h-4z', 'M12 4v3', 'M12 17v3', 'M4 12h3', 'M17 12h3']
 }

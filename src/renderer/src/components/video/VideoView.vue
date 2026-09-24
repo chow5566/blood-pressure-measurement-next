@@ -75,6 +75,7 @@
             }}
           </span>
         </template>
+        <span v-if="canCapture && fps > 0" class="video-view__fps">{{ fps }} FPS</span>
       </div>
     </div>
   </div>
@@ -140,6 +141,8 @@ const selectedDeviceId = ref('')
 const stream = ref<MediaStream | null>(null)
 const loading = ref(false)
 const videoError = ref('')
+/** 实时帧率（叠加在画面上） */
+const fps = ref(0)
 
 /** 是否可采集（已取流且无错误） */
 const canCapture = computed(() => !videoError.value && !!stream.value)
@@ -193,6 +196,7 @@ async function startPlay(deviceId?: string): Promise<void> {
     if (videoRef.value) {
       videoRef.value.srcObject = stream.value
       await videoRef.value.play()
+      startFpsMeter()
     }
   } catch (error) {
     videoError.value = `打开设备失败：${(error as Error).message}`
@@ -255,11 +259,46 @@ function takePhoto(): string | null {
 
 /** 停止播放并释放摄像头 */
 function stopPlayback(): void {
+  stopFpsMeter()
   stopStream(stream.value)
   stream.value = null
   if (videoRef.value) {
     videoRef.value.srcObject = null
   }
+}
+
+/** 采样实际渲染帧率（requestVideoFrameCallback），供底栏展示 */
+type VideoWithRvfc = HTMLVideoElement & {
+  requestVideoFrameCallback?: (cb: (now: number) => void) => number
+}
+let fpsRunning = false
+let fpsFrames = 0
+let fpsTick = 0
+
+function startFpsMeter(): void {
+  const video = videoRef.value as VideoWithRvfc | undefined
+  if (!video?.requestVideoFrameCallback) return
+  stopFpsMeter()
+  fpsRunning = true
+  fpsFrames = 0
+  fpsTick = performance.now()
+  const tick = (now: number): void => {
+    if (!fpsRunning) return
+    fpsFrames++
+    if (now - fpsTick >= 1000) {
+      fps.value = fpsFrames
+      fpsFrames = 0
+      fpsTick = now
+    }
+    video.requestVideoFrameCallback?.(tick)
+  }
+  video.requestVideoFrameCallback(tick)
+}
+
+function stopFpsMeter(): void {
+  fpsRunning = false
+  fpsFrames = 0
+  fps.value = 0
 }
 
 /**
@@ -358,6 +397,16 @@ defineExpose({ takePhoto, init })
   pointer-events: none;
 }
 
+.video-view__fps {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  padding: 2px 8px;
+  background: rgba(0, 0, 0, 0.55);
+  color: rgba(255, 255, 255, 0.85);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
 .video-view__error {
   position: absolute;
   left: 0;

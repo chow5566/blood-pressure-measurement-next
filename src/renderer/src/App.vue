@@ -96,13 +96,20 @@
         </main>
       </div>
 
-      <!-- 底栏 -->
+      <!-- 底栏：实时系统状态 -->
       <footer class="footer">
-        <span class="footer__item">
-          <span class="dot" :class="{ 'is-online': config.loggedIn }"></span>
-          {{ config.loggedIn ? '在线' : '离线使用' }}
+        <span class="footer__item" :title="net.online ? '网络已连接' : '网络未连接'">
+          <span class="dot" :class="{ 'is-online': net.online }"></span>
+          {{ net.online ? '已联网' : '未联网' }}
         </span>
-        <span class="footer__item">{{ currentSub }}</span>
+        <span v-if="net.wifiSignal != null" class="footer__item" :title="net.wifiSsid || 'WiFi'">
+          <UiIcon name="wifi" :size="13" />
+          WiFi {{ net.wifiSignal }}%
+        </span>
+        <span class="footer__item" title="操作系统位数">
+          <UiIcon name="cpu" :size="13" />
+          系统 {{ osBitness }}
+        </span>
         <span class="footer__spacer"></span>
         <span class="footer__item" :title="config.baseApi">{{ serverHost }}</span>
         <span class="footer__item">v{{ config.version }}</span>
@@ -119,7 +126,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import LoginView from '@r/views/LoginView.vue'
 import WindowControls from '@r/components/WindowControls.vue'
@@ -135,6 +142,7 @@ import { useUserStore } from '@r/stores/user'
 import { useThemeStore, type ThemeMode } from '@r/stores/theme'
 import { useUpdateStore } from '@r/stores/update'
 import { authApi } from '@r/api/auth'
+import { appApi } from '@r/api/app'
 import { windowApi } from '@r/api/window'
 import { confirmBox } from '@r/utils/confirm'
 import { configureHotkeys, installHotkeys, setPageScope } from '@r/hotkeys/manager'
@@ -150,6 +158,27 @@ const updateStore = useUpdateStore()
 const route = useRoute()
 const router = useRouter()
 const entered = ref(false)
+
+/** 底栏系统状态：网络 / WiFi 信号 / 系统位数 */
+const net = reactive<{ online: boolean; wifiSignal: number | null; wifiSsid: string | null }>({
+  online: true,
+  wifiSignal: null,
+  wifiSsid: null
+})
+const osArch = ref<'x86' | 'x64'>('x64')
+const osBitness = computed(() => (osArch.value === 'x64' ? '64 位' : '32 位'))
+
+async function refreshNetStatus(): Promise<void> {
+  try {
+    const status = await appApi.netStatus()
+    net.online = status.online
+    net.wifiSignal = status.wifiSignal
+    net.wifiSsid = status.wifiSsid
+  } catch {
+    // 忽略
+  }
+}
+let netTimer: ReturnType<typeof setInterval> | null = null
 /** 登录/退出切换中：盖一层品牌遮罩，避免窗口缩放时露出不匹配的画面 */
 const switching = ref(false)
 
@@ -221,7 +250,6 @@ const themeOptions: { id: ThemeMode; label: string; icon: IconName }[] = [
 ]
 
 const currentTitle = computed(() => (route.meta.title as string) || '血压及B超检测')
-const currentSub = computed(() => (route.meta.subtitle as string) || '')
 
 /** 路由名 → 快捷键作用域 */
 const SCOPE_BY_ROUTE: Record<string, HotkeyScope> = {
@@ -315,6 +343,19 @@ onMounted(async () => {
   }
   configureHotkeys(() => config.hotkeys)
   installHotkeys()
+  void appApi
+    .info()
+    .then((info) => {
+      osArch.value = info.osArch
+    })
+    .catch(() => undefined)
+  void refreshNetStatus()
+  netTimer = setInterval(refreshNetStatus, 4000)
+})
+
+onUnmounted(() => {
+  if (netTimer) clearInterval(netTimer)
+  netTimer = null
 })
 
 /** 启动后自动检查更新（发现新版本会自动弹框；忽略的版本不弹；开发环境不检查） */

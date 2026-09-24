@@ -559,7 +559,7 @@ onMounted(() => {
   void appApi
     .info()
     .then((info) => {
-      arch.value = info.arch
+      arch.value = info.osArch
     })
     .catch(() => undefined)
 })

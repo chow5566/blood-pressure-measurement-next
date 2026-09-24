@@ -125,6 +125,16 @@ export interface AuthPopupInfo {
   managerExtendCount?: number
 }
 
+/** 网络状态（底部状态栏） */
+export interface NetStatus {
+  /** 是否联网 */
+  online: boolean
+  /** WiFi 信号强度（0~100）；非 WiFi 或不可用为 null */
+  wifiSignal: number | null
+  /** 当前 WiFi 名称；无则 null */
+  wifiSsid: string | null
+}
+
 /** 更新状态 */
 export type UpdateState =
   | 'idle'

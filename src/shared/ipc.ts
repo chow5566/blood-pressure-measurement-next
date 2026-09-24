@@ -38,6 +38,7 @@ import type {
   AuthPopupInfo,
   LoginInput,
   LoginResult,
+  NetStatus,
   RuntimeConfig,
   RuntimeConfigPatch,
   UpdateStatus,
@@ -53,6 +54,8 @@ export interface AppInfo {
   node: string
   v8: string
   arch: string
+  /** 操作系统位数（x86=32 位 / x64=64 位） */
+  osArch: 'x86' | 'x64'
   platform: string
   dataDir: string
   /** 数据库文件路径 */
@@ -70,6 +73,8 @@ export interface IpcContract {
   'app:ping': (message: string) => string
   /** 应用与环境信息 */
   'app:info': () => AppInfo
+  /** 网络状态（联网 / WiFi 信号） */
+  'app:net-status': () => NetStatus
   /** 用系统浏览器打开外部链接 */
   'app:open-external': (url: string) => void
   /** 渲染进程日志汇聚到主进程文件日志 */
@@ -191,6 +196,7 @@ export interface IpcEvents {
 export const INVOKE_CHANNELS = [
   'app:ping',
   'app:info',
+  'app:net-status',
   'app:open-external',
   'log:renderer',
   'storage:info',
