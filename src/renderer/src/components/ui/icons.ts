@@ -26,6 +26,7 @@ export type IconName =
   | 'wifi'
   | 'gauge'
   | 'cpu'
+  | 'ethernet'
 
 export const ICONS: Record<IconName, string[]> = {
   pulse: ['M3 12h3.5l2-5 3.2 9.5 2.3-6.5 1.6 3H21'],
@@ -94,5 +95,6 @@ export const ICONS: Record<IconName, string[]> = {
     'M12 19h.01'
   ],
   gauge: ['M4 18a8 8 0 0 1 16 0', 'M12 14l3.6-2.6'],
-  cpu: ['M7 7h10v10H7z', 'M10 10h4v4h-4z', 'M12 4v3', 'M12 17v3', 'M4 12h3', 'M17 12h3']
+  cpu: ['M7 7h10v10H7z', 'M10 10h4v4h-4z', 'M12 4v3', 'M12 17v3', 'M4 12h3', 'M17 12h3'],
+  ethernet: ['M3 7h18v7H3z', 'M10 14v3h4v-3', 'M12 17v4']
 }

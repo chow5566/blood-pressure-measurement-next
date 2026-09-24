@@ -17,11 +17,11 @@ function detectOsArch(): 'x86' | 'x64' {
   return pa.includes('64') || paW.includes('64') ? 'x64' : 'x86'
 }
 
-/** 读取 WiFi 信号强度与 SSID（Windows：netsh；失败返回 null） */
-function readWifi(): Promise<{ signal: number | null; ssid: string | null }> {
+/** 读取 WiFi 连接状态、信号强度与 SSID（Windows：netsh；失败返回未连接） */
+function readWifi(): Promise<{ connected: boolean; signal: number | null; ssid: string | null }> {
   return new Promise((resolve) => {
     if (process.platform !== 'win32') {
-      resolve({ signal: null, ssid: null })
+      resolve({ connected: false, signal: null, ssid: null })
       return
     }
     execFile(
@@ -30,17 +30,18 @@ function readWifi(): Promise<{ signal: number | null; ssid: string | null }> {
       { windowsHide: true, timeout: 4000, encoding: 'utf-8' },
       (error, stdout) => {
         if (error || !stdout) {
-          resolve({ signal: null, ssid: null })
+          resolve({ connected: false, signal: null, ssid: null })
           return
         }
         const state = /(?:状态|State)\s*[:：]\s*(.+)$/m.exec(stdout)
         if (!state || !/已连接|connected/i.test(state[1])) {
-          resolve({ signal: null, ssid: null })
+          resolve({ connected: false, signal: null, ssid: null })
           return
         }
         const signal = /(?:信号|Signal)\s*[:：]\s*(\d+)\s*%/.exec(stdout)
         const ssid = /^\s*SSID\s*[:：]\s*(.+)$/m.exec(stdout)
         resolve({
+          connected: true,
           signal: signal ? Number(signal[1]) : null,
           ssid: ssid ? ssid[1].trim() : null
         })
@@ -95,6 +96,7 @@ export function registerAppIpc(): void {
     } catch {
       online = true
     }
-    return { online, wifiSignal: wifi.signal, wifiSsid: wifi.ssid }
+    const type: NetStatus['type'] = wifi.connected ? 'wifi' : online ? 'wired' : 'none'
+    return { online, type, wifiSignal: wifi.connected ? wifi.signal : null, wifiSsid: wifi.ssid }
   })
 }

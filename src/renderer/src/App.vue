@@ -98,13 +98,29 @@
 
       <!-- 底栏：实时系统状态 -->
       <footer class="footer">
-        <span class="footer__item" :title="net.online ? '网络已连接' : '网络未连接'">
-          <span class="dot" :class="{ 'is-online': net.online }"></span>
-          {{ net.online ? '已联网' : '未联网' }}
-        </span>
-        <span v-if="net.wifiSignal != null" class="footer__item" :title="net.wifiSsid || 'WiFi'">
-          <UiIcon name="wifi" :size="13" />
-          WiFi {{ net.wifiSignal }}%
+        <span class="footer__item" :title="netTitle">
+          <template v-if="net.type === 'wifi'">
+            <svg class="net-bars" width="15" height="13" viewBox="0 0 15 13" aria-hidden="true">
+              <rect
+                v-for="(h, i) in WIFI_BAR_HEIGHTS"
+                :key="i"
+                :x="i * 4"
+                :y="13 - h"
+                width="3"
+                :height="h"
+                :class="{ 'is-on': i < wifiBars }"
+              />
+            </svg>
+            WiFi
+          </template>
+          <template v-else-if="net.type === 'wired'">
+            <UiIcon name="ethernet" :size="14" />
+            有线
+          </template>
+          <template v-else>
+            <span class="dot"></span>
+            未联网
+          </template>
         </span>
         <span class="footer__item" title="操作系统位数">
           <UiIcon name="cpu" :size="13" />
@@ -159,19 +175,45 @@ const route = useRoute()
 const router = useRouter()
 const entered = ref(false)
 
-/** 底栏系统状态：网络 / WiFi 信号 / 系统位数 */
-const net = reactive<{ online: boolean; wifiSignal: number | null; wifiSsid: string | null }>({
+/** 底栏系统状态：网络类型 / WiFi 信号 / 系统位数 */
+const net = reactive<{
+  online: boolean
+  type: 'wired' | 'wifi' | 'none'
+  wifiSignal: number | null
+  wifiSsid: string | null
+}>({
   online: true,
+  type: 'wired',
   wifiSignal: null,
   wifiSsid: null
 })
 const osArch = ref<'x86' | 'x64'>('x64')
 const osBitness = computed(() => (osArch.value === 'x64' ? '64 位' : '32 位'))
 
+/** WiFi 信号格（4 格，按信号强度点亮） */
+const WIFI_BAR_HEIGHTS = [4, 7, 10, 13]
+const wifiBars = computed(() => {
+  const signal = net.wifiSignal ?? 0
+  if (signal >= 75) return 4
+  if (signal >= 50) return 3
+  if (signal >= 25) return 2
+  if (signal > 0) return 1
+  return 0
+})
+const netTitle = computed(() => {
+  if (net.type === 'wifi') {
+    const suffix = net.wifiSignal != null ? ` · 信号 ${net.wifiSignal}%` : ''
+    return `${net.wifiSsid || 'WiFi'}${suffix}`
+  }
+  if (net.type === 'wired') return '有线网络'
+  return '网络未连接'
+})
+
 async function refreshNetStatus(): Promise<void> {
   try {
     const status = await appApi.netStatus()
     net.online = status.online
+    net.type = status.type
     net.wifiSignal = status.wifiSignal
     net.wifiSsid = status.wifiSsid
   } catch {
@@ -579,6 +621,17 @@ async function autoCheckUpdate(): Promise<void> {
 }
 .dot.is-online {
   background: var(--ok);
+}
+
+/* WiFi 信号格 */
+.net-bars {
+  flex-shrink: 0;
+}
+.net-bars rect {
+  fill: var(--line-strong);
+}
+.net-bars rect.is-on {
+  fill: var(--t1);
 }
 
 /* 登录/退出切换遮罩（品牌闪屏） */

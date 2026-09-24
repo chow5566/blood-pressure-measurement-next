@@ -129,6 +129,8 @@ export interface AuthPopupInfo {
 export interface NetStatus {
   /** 是否联网 */
   online: boolean
+  /** 连接类型：有线 / WiFi / 未连接 */
+  type: 'wired' | 'wifi' | 'none'
   /** WiFi 信号强度（0~100）；非 WiFi 或不可用为 null */
   wifiSignal: number | null
   /** 当前 WiFi 名称；无则 null */
