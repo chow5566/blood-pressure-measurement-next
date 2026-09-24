@@ -24,26 +24,25 @@ function readWifi(): Promise<{ connected: boolean; signal: number | null; ssid: 
       resolve({ connected: false, signal: null, ssid: null })
       return
     }
+    // chcp 65001 强制 UTF-8，避免中文系统下 SSID 乱码；
+    // 解析用 ASCII 锚点（SSID 标签 & 唯一百分数），不依赖本地化中文标签。
     execFile(
-      'netsh',
-      ['wlan', 'show', 'interfaces'],
+      'cmd',
+      ['/c', 'chcp 65001>nul & netsh wlan show interfaces'],
       { windowsHide: true, timeout: 4000, encoding: 'utf-8' },
       (error, stdout) => {
         if (error || !stdout) {
           resolve({ connected: false, signal: null, ssid: null })
           return
         }
-        const state = /(?:状态|State)\s*[:：]\s*(.+)$/m.exec(stdout)
-        if (!state || !/已连接|connected/i.test(state[1])) {
-          resolve({ connected: false, signal: null, ssid: null })
-          return
-        }
-        const signal = /(?:信号|Signal)\s*[:：]\s*(\d+)\s*%/.exec(stdout)
-        const ssid = /^\s*SSID\s*[:：]\s*(.+)$/m.exec(stdout)
+        const ssidMatch = /^\s*SSID\s*[:：]\s*(.+)$/m.exec(stdout)
+        const signalMatch = /[:：]\s*(\d{1,3})\s*%/m.exec(stdout)
+        const ssid = ssidMatch ? ssidMatch[1].trim() : ''
+        const connected = ssid.length > 0
         resolve({
-          connected: true,
-          signal: signal ? Number(signal[1]) : null,
-          ssid: ssid ? ssid[1].trim() : null
+          connected,
+          signal: connected && signalMatch ? Number(signalMatch[1]) : null,
+          ssid: connected ? ssid : null
         })
       }
     )
